@@ -10,15 +10,12 @@ Run the following command to install kernel 3.x:
 ```
 sudo apt-get install linux-image-generic-lts-trusty
 ```
-Edit /etc/default/grub as root so that the first section looks like the example below:
+Edit /etc/default/grub as root so that the five lines look like the example below (GRUB_DISABLE_SUBMENU needs to be added):
 ```
 GRUB_DEFAULT=2
 #GRUB_HIDDEN_TIMEOUT=0
 #GRUB_HIDDEN_TIMEOUT_QUIET=true
 GRUB_TIMEOUT=10
-GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
-GRUB_CMDLINE_LINUX=""
 GRUB_DISABLE_SUBMENU=y
 ```
 and then run update-grub:
