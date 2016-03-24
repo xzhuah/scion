@@ -625,7 +625,10 @@ static inline int send_packet(struct rte_mbuf *m, uint8_t port)
     udp_hdr->dgram_cksum = 0;
     udp_hdr->dgram_cksum = rte_ipv4_udptcp_cksum(ipv4_hdr, udp_hdr);
 
-    RTE_LOG(DEBUG, HSR, "send_packet() dpdk_port=%d, %#x:%d\n", port, ipv4_hdr->dst_addr, ntohs(udp_hdr->dst_port));
+    RTE_LOG(DEBUG, HSR, "send_packet() dpdk_port=%d, %s:%d\n",
+            port,
+            inet_ntoa(*(struct in_addr *)&ipv4_hdr->dst_addr),
+            ntohs(udp_hdr->dst_port));
     l2fwd_send_packet(m, port);
 }
 
@@ -665,7 +668,7 @@ static inline int send_ingress(struct rte_mbuf *m, uint32_t next_ifid,
         // Update destination IP address and UDP port number
         //ipv4_hdr->dst_addr = GET_EDGE_ROUTER_IPADDR(next_ifid);
         ipv4_hdr->dst_addr = ntohl(ifid2addr[next_ifid]);
-        udp_hdr->dst_port = htons(SCION_UDP_PORT);
+        udp_hdr->dst_port = htons(SCION_UDP_EH_DATA_PORT);
 
         ether_addr_copy(
                 internal_router_mac[port_map[dpdk_rx_port].local].addr_bytes,
@@ -699,7 +702,7 @@ static inline void deliver(struct rte_mbuf *m, uint32_t ptype,
     ether_addr_copy(internal_router_mac[port_map[dpdk_rx_port].local].addr_bytes,
             &eth_hdr->d_addr);
     ipv4_hdr->src_addr = internal_ip[port_map[dpdk_rx_port].local];
-    udp_hdr->dst_port = htons(SCION_UDP_PORT);
+    udp_hdr->dst_port = htons(SCION_UDP_EH_DATA_PORT);
 
     // TODO support IPv6
     if (ptype == PATH_MGMT_PACKET) {
@@ -724,13 +727,6 @@ static inline void deliver(struct rte_mbuf *m, uint32_t ptype,
         uint8_t host_addr[] = {0x0, 0x0, 0x0, 0x0, 0x1, 0x3};
         ether_addr_copy(host_addr, &eth_hdr->d_addr);
 #endif
-        udp_hdr->dst_port = htons(SCION_UDP_PORT);
-
-        // FIXME
-        // get scion udp port number
-        struct udp_hdr *scion_udp_hdr =
-            (struct udp_hdr *)((uint8_t *)sch + sch->headerLen);
-        udp_hdr->dst_port = htons(SCION_UDP_EH_DATA_PORT);
     }
 
     send_packet(m, port_map[dpdk_rx_port].local);
@@ -995,7 +991,7 @@ static inline void process_pcb(struct rte_mbuf *m, uint8_t from_bs,
         ipv4_hdr->src_addr = internal_ip[port_map[dpdk_rx_port].local];
 
         ipv4_hdr->dst_addr = beacon_servers[0];
-        udp_hdr->dst_port = htons(SCION_UDP_PORT);
+        udp_hdr->dst_port = htons(SCION_UDP_EH_DATA_PORT);
         ether_addr_copy(
                 internal_router_mac[port_map[dpdk_rx_port].local].addr_bytes,
                 &eth_hdr->d_addr);
@@ -1034,7 +1030,7 @@ static inline void process_ifid_request(struct rte_mbuf *m,
     for (i = 0; i < beacon_server_count; i++) {
         ipv4_hdr->dst_addr = beacon_servers[i];
 
-        udp_hdr->dst_port = ntohs(SCION_UDP_PORT);
+        udp_hdr->dst_port = ntohs(SCION_UDP_EH_DATA_PORT);
         ether_addr_copy(
                 internal_router_mac[port_map[dpdk_rx_port].local].addr_bytes,
                 &eth_hdr->d_addr);
@@ -1065,7 +1061,7 @@ static inline void relay_cert_server_packet(struct rte_mbuf *m,
         ipv4_hdr->src_addr = internal_ip[port_map[dpdk_rx_port].local];
         ipv4_hdr->dst_addr = certificate_servers[0];
 
-        udp_hdr->dst_port = htons(SCION_UDP_PORT);
+        udp_hdr->dst_port = htons(SCION_UDP_EH_DATA_PORT);
         ether_addr_copy(
                 internal_router_mac[port_map[dpdk_rx_port].local].addr_bytes,
                 &eth_hdr->d_addr);

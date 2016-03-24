@@ -479,18 +479,18 @@ class TopoGenerator(object):
     def _write_as_topos(self):
         for topo_id, as_topo, base in _srv_iter(
                 self.topo_dicts, self.out_dir, common=True):
+            if self.hsr:
+                router = self.topo_dicts[topo_id]["EdgeRouters"].get(HSR_ID)
+                if router:
+                    contents = (str(router["Addr"].ip) + "\n" +
+                                str(router["Interface"]["Addr"].ip))
+                    write_file(HSR_ADDR_FILE, contents)
+                    del self.topo_dicts[topo_id]["EdgeRouters"][HSR_ID]
             path = os.path.join(base, TOPO_FILE)
             contents = yaml.dump(self.topo_dicts[topo_id])
             write_file(path, contents)
             # Test if topo file parses cleanly
             Topology.from_file(path)
-            if self.hsr:
-                router = self.topo_dicts[topo_id]["EdgeRouters"].get(HSR_ID)
-                if not router:
-                    continue
-                contents = (str(router["Addr"].ip) + "\n" +
-                            str(router["Interface"]["Addr"].ip))
-                write_file(HSR_ADDR_FILE, contents)
 
     def _write_as_list(self):
         list_path = os.path.join(self.out_dir, AS_LIST_FILE)

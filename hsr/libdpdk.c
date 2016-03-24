@@ -141,7 +141,7 @@ void build_lower_layers(struct rte_mbuf *pkt, struct ether_addr *eth_addrs,
             size - sizeof(eth) - sizeof(ip));
     copy_buf_to_pkt(&ip, sizeof(ip), pkt, sizeof(eth));
     initialize_udp_header(&udp,
-            SCION_UDP_PORT, SCION_UDP_PORT,
+            SCION_UDP_EH_DATA_PORT, SCION_UDP_EH_DATA_PORT,
             size - sizeof(eth) - sizeof(ip) - sizeof(udp));
     copy_buf_to_pkt(&udp, sizeof(udp), pkt, sizeof(eth) + sizeof(ip));
 

@@ -82,5 +82,4 @@ tags
 # HSR
 ##########################
 hsr/build
-hsr/*.json
 hsr/vagrant/.vagrant

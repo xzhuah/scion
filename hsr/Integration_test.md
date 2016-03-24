@@ -1,3 +1,7 @@
+# Prerequisites
+Please refer to README.md for more information about HSR and DPDK.
+Also, please refer to topology/mininet/README.md for instructions on setting up mininet.
+
 # Running mininet
 Here we assume a tiny topology.
 ```
@@ -11,8 +15,7 @@ topology/mininet/setup.sh
 
 ## Run Mininet
 ```
-./scion.sh topology -m -r -c topology/Tiny.topo
-tools/zkcleanstate
+./scion.sh topology zkclean -m -r -c topology/Tiny.topo
 topology/mininet/run.sh -r
 ```
 
@@ -30,16 +33,15 @@ Default packages of Ubuntu 14.04 are a bit old, so you need to install them manu
 * Virtual Box version 5.0 (https://www.virtualbox.org/). Note that version 4.x does not support AES-NI, thus version 5.x is required.
 * Vagrant (https://www.vagrantup.com/downloads.html) for building a VM with DPDK
 
-Install Docker (for some reason needed to make communication between HSR and Mininet work fully)
+Enable IP forwarding in the kernel
 ```
-sudo apt-get install docker.io
+sudo sysctl net.ipv4.ip_forward=1
 ```
 
 Download base ubuntu image.
 ```
-vagrant box add bento/ubuntu-14.04
+vagrant box add --provider virtualbox bento/ubuntu-14.04
 ```
-When asked, select the "virtualbox" option
 
 ## Run VM
 
@@ -60,6 +62,8 @@ Open a console.
 ```
 vagrant ssh
 ```
+
+At this point you are inside the VM. Frome there:
 
 Build HSR
 ```
@@ -82,9 +86,9 @@ Inside the VM scion/hsr directory,
 
 
 ## Test
-In the host, run end2end_test
+Back in the host (separate terminal), run end2end_test
 ```
-PYTHONPATH=. python3 test/integration/end2end_test.py -m 1-13 1-12
+PYTHONPATH=. test/integration/end2end_test.py -m
 ```
 
 
@@ -125,8 +129,8 @@ topology.py executes arp command to insert the ARP entries. In the following cas
 
 
 Moreover, topology.py executes following two commands.
-```sudo  arp -s [hsr_internal_ip] 1:2:3:4:5:6``` (for sending ping packet to HSR)
-```sudo ifconfig s4 hw ether 0:0:0:0:1:03``` (to fix the MAC address of switch s4. HSR uses this MAC address to send packet to end2end.py)
+```arp -s [hsr_internal_ip] 1:2:3:4:5:6``` (for sending ping packet to HSR)
+```ip link set dev s4 addr 0:0:0:0:1:03``` (to fix the MAC address of switch s4. HSR uses this MAC address to send packet to end2end.py)
 Note that mininet may change switch assignment, so please check which switch is for AS 13.
 -->
 
@@ -147,26 +151,21 @@ Sometimes packets from HSR are not delivered to Mininet hosts. In this case, ple
  379   unsigned char mac_cert[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0xd};
  380   unsigned char mac_path[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0xf};
  381   unsigned char mac_dns[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x10};
-
 ```
 You can get these MAC address from mininet console. For example,
 ```
-mininet> bs1_13_1 ifconfig
-bs1_13_1-0 Link encap:Ethernet  HWaddr 00:00:00:00:00:08
-          inet addr:100.64.0.19  Bcast:100.64.0.23  Mask:255.255.255.248
-          inet6 addr: fe80::200:ff:fe00:8/64 Scope:Link
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:258 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:319 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:1000
-          RX bytes:90179 (90.1 KB)  TX bytes:28036 (28.0 KB)
+mininet> bs1_13_1 ip link
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+63: bs1_13_1-0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000
+    link/ether 00:00:00:00:00:08 brd ff:ff:ff:ff:ff:ff
 ```
 
 
 * Check static ARP entries of mininet hosts (HSR local/egress interfaces in topology.py)
 * Check the MAC address of the AS 13 switch in topology.py.
 ```
-os.system('sudo ifconfig s4 hw ether 0:0:0:0:1:03')  # HSR MAC address
+os.system('ip link set dev s4 addr 0:0:0:0:1:03')  # HSR MAC address
 ```
 Mininet sometimes changes switch assignment, so it may not be s4.
 

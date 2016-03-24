@@ -175,7 +175,7 @@ def main():
         host.cmd("%s -c gen/mininet/%s.conf" % (supervisord, elem_name))
 
     if args.hsr:
-        os.system('sudo ifconfig s4 hw ether 0:0:0:0:1:03')  # HSR MAC address
+        os.system('ip link set dev s4 addr 0:0:0:0:1:03')  # HSR MAC address
         os.system("arp -s %s 1:2:3:4:5:6" % hsr_internal_ip)  # HSR MAC address
 
     CLI(net)
