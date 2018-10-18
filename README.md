@@ -70,7 +70,7 @@ Necessary steps in order to run SCION:
    ```bash
    mkdir -p "$GOPATH/src/github.com/scionproto"
    cd "$GOPATH/src/github.com/scionproto"
-   git clone --recursive git@github.com:scionproto/scion
+   git clone --recursive git@github.com:netsec-ethz/netsec-scion scion
    cd scion
    ```
 
