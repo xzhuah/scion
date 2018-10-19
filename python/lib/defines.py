@@ -115,7 +115,7 @@ PATH_FLAG_SIBRA = "SIBRA"
 MAX_HOST_ADDR_LEN = 16
 
 # Minimum revocation TTL in seconds
-MIN_REVOCATION_TTL = 10
+MIN_REVOCATION_TTL = 20
 REVOCATION_GRACE = 1
 
 # Max time for a path lookup to succeed/fail.
