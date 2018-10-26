@@ -92,6 +92,7 @@ func init() {
 
 func main() {
 	log.AddLogConsFlags()
+	log.SetupLogConsole("debug")
 	validateFlags()
 	if err := log.SetupFromFlags(""); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %s", err)
@@ -108,9 +109,13 @@ func main() {
 		if remote.L4Port == 0 {
 			LogFatal("Invalid remote port", "remote port", remote.L4Port)
 		}
-		c := newClient()
-		setSignalHandler(c)
-		c.run()
+		c1 := newClient()
+		c2 := newClient()
+		setSignalHandler(c1)
+		c1.initResvMgr()
+		c2.mgr=c1.mgr
+		go c2.run()
+		c1.run()
 	case ModeServer:
 		server{}.run()
 	}
@@ -223,10 +228,9 @@ func newClient() *client {
 // while receiving pong messages. For each successful ping-pong, a message
 // with the round trip time is printed.
 func (c *client) run() {
-
-	c.initResvMgr()
 	// Needs to happen before DialSCION, as it will 'copy' the remote to the connection.
 	// If remote is not in local AS, we need a path!
+	log.Debug("Setting up path...")
 	ws := c.setupPath()
 	defer c.Close()
 	// Connect to remote address. Note that currently the SCION library
@@ -234,6 +238,7 @@ func (c *client) run() {
 	// IP address needs to be supplied explicitly. When supplied a local
 	// port of 0, DialSCION will assign a random free local port.
 	var err error
+	log.Debug("Dialing scion...")
 	c.sess, err = snet.DialSCION("udp4", &local, &remote)
 	if err != nil {
 		LogFatal("Unable to dial", "err", err)

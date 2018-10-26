@@ -33,6 +33,11 @@ cmd_topology() {
     fi
 }
 
+cmd_restart(){
+	cmd_stop "$@"
+	cmd_run	"$@"
+}
+
 cmd_run() {
     if [ "$1" != "nobuild" ]; then
         echo "Compiling..."
@@ -323,7 +328,7 @@ COMMAND="$1"
 shift
 
 case "$COMMAND" in
-    coverage|help|lint|run|mstart|mstatus|mstop|stop|status|test|topology|version|build|clean|sciond)
+    coverage|help|lint|run|mstart|mstatus|mstop|stop|status|test|topology|version|build|clean|sciond|restart)
         "cmd_$COMMAND" "$@" ;;
     start) cmd_run "$@" ;;
     *)  cmd_help; exit 1 ;;

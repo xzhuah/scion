@@ -284,6 +284,7 @@ func (s *EphemSetup) HandleRep(event notifyEvent) (bool, error) {
 		if err != nil {
 			return false, err
 		}
+
 		s.entry.syncResv.UpdateEphem(ephem)
 		s.entry.ephemMeta.timestamp = time.Now()
 		s.entry.ephemMeta.state = ephemExists

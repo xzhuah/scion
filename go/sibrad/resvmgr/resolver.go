@@ -93,6 +93,7 @@ func (r *resolver) handle() (bool, error) {
 		if quit, err := r.resolveSteady(entry, path); quit || err != nil {
 			return quit, err
 		}
+		log.Debug("Updated steady reservation")
 	}
 	if entry.ephemMeta == nil {
 		return false, nil
@@ -106,17 +107,21 @@ func (r *resolver) handle() (bool, error) {
 			r.notify(&Event{Code: ExtnExpired})
 			entry.ephemMeta.state = start
 			entry.syncResv.UpdateEphem(nil)
+			log.Debug("Updated ephemeral reservation")
 		}
 		switch entry.ephemMeta.state {
 		case ephemRequested, cleanUp:
 			// Ignore. Need to wait until the state changes.
 		case start:
+			log.Debug("Configuring ephemeral reservation")
 			return r.setupEphem(entry, path, localSvcSB)
 		case ephemExists:
 			ext := entry.syncResv.Load().Ephemeral
 			if ext == nil || ext.Expiry().Before(time.Now()) {
+				log.Debug("Setting up ephemeral")
 				return r.setupEphem(entry, path, localSvcSB)
 			} else if r.needRenewal(ext, entry) {
+				log.Debug("Renewing ephemeral reservation")
 				return r.renewEphem(entry, ext, path, localSvcSB)
 			}
 		}
