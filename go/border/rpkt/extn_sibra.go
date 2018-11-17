@@ -180,8 +180,18 @@ func (s *rSibraExtn) RegisterHooks(h *hooks) error {
 		h.IFNext = append(h.IFNext, s.IFNext)
 		h.Validate = append(h.Validate, s.VerifySOF)
 	}
+
 	if !s.IsRequest {
 		h.Route = append(h.Route, s.RouteSibraData)
+
+		// In case we have QoS traffic, proper monitoring needs to be configured
+		if !s.BestEffort {
+			if s.rp.DirFrom == rcmn.DirLocal && s.CurrHop==0 {
+				h.Validate = append(h.Validate, s.VerifyLocalFlowBW)
+			} else if s.rp.DirFrom == rcmn.DirExternal {
+				h.Validate = append(h.Validate, s.VerifyTransitFlowBW)
+			}
+		}
 	} else {
 		h.Route = append(h.Route, s.RouteSibraRequest)
 	}

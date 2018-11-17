@@ -21,6 +21,7 @@ package rpkt
 
 import (
 	"fmt"
+	"github.com/scionproto/scion/go/lib/sibra/flowmonitor"
 	"sync/atomic"
 	"time"
 
@@ -47,16 +48,18 @@ var callbacks struct {
 	rawSRevF func(RawSRevCallbackArgs)
 	ifIDF    func(IFIDCallbackArgs)
 	sibraF   func(args SIBRACallbackArgs)
+	bandwidthLimitF func(info flowmonitor.FlowInfo, isLocalFlow bool) bool
 }
 
 // Init takes callback functions provided by the router and stores them for use
 // by the rpkt package.
 func Init(rawSRevF func(RawSRevCallbackArgs), ifIDF func(IFIDCallbackArgs),
-	sibraF func(args SIBRACallbackArgs)) {
+	sibraF func(args SIBRACallbackArgs), bwF func(info flowmonitor.FlowInfo, isLocalFlow bool) bool) {
 
 	callbacks.rawSRevF = rawSRevF
 	callbacks.ifIDF = ifIDF
 	callbacks.sibraF = sibraF
+	callbacks.bandwidthLimitF = bwF
 }
 
 // Router representation of SCION packet, including metadata.  The comments for the members have

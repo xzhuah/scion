@@ -17,9 +17,11 @@
 package main
 
 import (
+	"github.com/scionproto/scion/go/lib/sibra/flowmonitor"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/scionproto/scion/go/border/conf"
 	"github.com/scionproto/scion/go/border/metrics"
@@ -60,11 +62,20 @@ type Router struct {
 	pktErrorQ chan pktErrorArgs
 	// sibraQ is a channel for handling sibra request packets
 	sibraQ chan rpkt.SIBRACallbackArgs
+	// Rate limiting COLIBRI traffic for local reservations
+	localFlowMonitor flowmonitor.FlowMonitor
+	// Overusage flow monitor, used for COLIBRI traffic in transit
+	transitFlowMonitor flowmonitor.FlowMonitor
 }
 
 func NewRouter(id, confDir string) (*Router, error) {
 	metrics.Init(id)
-	r := &Router{Id: id, confDir: confDir}
+	r := &Router{
+		Id: id,
+		confDir: confDir,
+		localFlowMonitor:flowmonitor.NewStetefulMonitor(500*time.Millisecond),
+		transitFlowMonitor:flowmonitor.NewStatelessFlowMonitor(100*time.Millisecond),
+	}
 	if err := r.setup(); err != nil {
 		return nil, err
 	}

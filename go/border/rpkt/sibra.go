@@ -15,6 +15,7 @@
 package rpkt
 
 import (
+	"github.com/scionproto/scion/go/lib/sibra/flowmonitor"
 	"hash"
 	"time"
 
@@ -94,6 +95,26 @@ func (s *rSibraExtn) RouteSibraData() (HookResult, error) {
 		return HookError, common.NewBasicError("Unsupported forwarding DirFrom", nil,
 			"dirFrom", s.rp.DirFrom)
 	}
+}
+
+func (s *rSibraExtn) VerifyLocalFlowBW() (HookResult, error) {
+	flowInfo :=flowmonitor.FlowInfo{
+		BwCls:s.Info().BwCls,
+		PacketSize:len(s.rp.Raw),
+		ReservationId:s.IDs[0],
+		ReservationIndex:s.Info().Index,
+	}
+
+	if callbacks.bandwidthLimitF(flowInfo, true){
+		return HookError, common.NewBasicError("Reserved bandwidht limit exceeded.",nil)
+	}else{
+		return HookContinue, nil
+	}
+}
+
+func (s *rSibraExtn) VerifyTransitFlowBW() (HookResult, error) {
+	//TODO: Implement
+	return HookContinue, nil
 }
 
 func (s *rSibraExtn) forwardFromExternal() (HookResult, error) {
