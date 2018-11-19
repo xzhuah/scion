@@ -113,8 +113,18 @@ func (s *rSibraExtn) VerifyLocalFlowBW() (HookResult, error) {
 }
 
 func (s *rSibraExtn) VerifyTransitFlowBW() (HookResult, error) {
-	//TODO: Implement
-	return HookContinue, nil
+	flowInfo :=flowmonitor.FlowInfo{
+		BwCls:s.Info().BwCls,
+		PacketSize:len(s.rp.Raw),
+		ReservationId:s.IDs[0],
+		ReservationIndex:s.Info().Index,
+	}
+
+	if callbacks.bandwidthLimitF(flowInfo, false){
+		return HookError, common.NewBasicError("Reserved bandwidht limit exceeded.",nil)
+	}else{
+		return HookContinue, nil
+	}
 }
 
 func (s *rSibraExtn) forwardFromExternal() (HookResult, error) {

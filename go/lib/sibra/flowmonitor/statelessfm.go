@@ -56,7 +56,7 @@ type StatelessFlowMonitor struct {
 	majorCycleTime time.Duration
 
 	// For sampling of active flows
-	sampledFlows [2][FLOW_SAMPLES_PER_MAJOR_CYCLE] [sibra.EphemIDLen]byte
+	sampledFlows [2][FLOW_SAMPLES_PER_MAJOR_CYCLE] EphemeralId
 	sampledFlowsLength [2] int
 	nextSamplePeriod time.Time
 
@@ -67,9 +67,12 @@ type StatelessFlowMonitor struct {
 
 	// Structures for slow path
 	flowTable map[EphemeralId] flowTrack
+
+	// Keep track of blacklisted flows
+	blacklist *Blacklist
 }
 
-func NewStatelessFlowMonitor(minCycleTime time.Duration) FlowMonitor{
+func NewStatelessFlowMonitor(minCycleTime time.Duration) FlowMonitor {
 	// TODO: This one needs to have a reference to the COLIBRI service messnger. We need to be able to blacklist ASes
 	res:= &StatelessFlowMonitor {
 		minorCycleTime:minCycleTime,
@@ -79,6 +82,7 @@ func NewStatelessFlowMonitor(minCycleTime time.Duration) FlowMonitor{
 		currentBufferIndex:0,
 		slowPathCommands:make(chan slowPathCommand),
 		flowTable:make(map[EphemeralId] flowTrack),
+		blacklist:NewBlacklist(),
 	}
 
 	go res.slowPath()
@@ -86,8 +90,12 @@ func NewStatelessFlowMonitor(minCycleTime time.Duration) FlowMonitor{
 	return res
 }
 
-func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) bool{
-	//TODO: Check if flow ID has been blacklisted
+func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) bool {
+	var flowId EphemeralId
+	copy(flowId[:], info.ReservationId[:sibra.EphemIDLen])
+	if fm.blacklist.IsFlowBlacklisted(flowId){
+		return true
+	}
 
 	now := time.Now()
 	var minorCycleIndex int
@@ -121,7 +129,7 @@ func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) bool{
 		minorCycleIndex = int(elapsedTime/fm.minorCycleTime)
 	}
 
-	bucketInidex := murmur.MurmurHash2(info.ReservationId,uint32(fm.majorCycle*MINOR_CYCLES_IN_MAJOR_CYCLE+minorCycleIndex)) % uint32(MINOR_CYCLE_COUNTERS)
+	bucketInidex := murmur.MurmurHash2(info.ReservationId, uint32(fm.majorCycle*MINOR_CYCLES_IN_MAJOR_CYCLE+minorCycleIndex)) % uint32(MINOR_CYCLE_COUNTERS)
 	normalizedPacketSize := uint64(info.PacketSize)*SCALE_FACTOR/uint64(info.BwCls.Bps())
 
 	fm.minorCycles[bufferIndex][minorCycleIndex].counters[bucketInidex]+=normalizedPacketSize
@@ -157,6 +165,15 @@ func (sf SuspiciousFlows) Less(i, j int) bool {
 	return sf[i].ratio > sf[j].ratio
 }
 
+func (sf SuspiciousFlows) Swap(i, j int) {
+	sf[i], sf[j] = sf[j], sf[i]
+}
+
+func (sf *SuspiciousFlows) Push(x interface{}) {
+	item := x.(*flowRank)
+	*sf = append(*sf, item)
+}
+
 func (sf *SuspiciousFlows) Pop() interface{} {
 	old := *sf
 	n := len(old)
@@ -165,16 +182,8 @@ func (sf *SuspiciousFlows) Pop() interface{} {
 	return item
 }
 
-func (sf *SuspiciousFlows) Push(x interface{}) {
-	item := x.(*flowRank)
-	*sf = append(*sf, item)
-}
-
-func (sf SuspiciousFlows) Swap(i, j int) {
-	sf[i], sf[j] = sf[j], sf[i]
-}
-
 func (fm *StatelessFlowMonitor)slowPath(){
+	log.Debug("Starting slow path processing...")
 	for processCommand := range fm.slowPathCommands{
 		bufferIndex := processCommand.bufferIndex
 		sampledFlowsCount := fm.sampledFlowsLength[bufferIndex]
@@ -249,20 +258,20 @@ func (fm *StatelessFlowMonitor)slowPath(){
 		now := time.Now()
 		// Clear the old counters
 		flows := make(SuspiciousFlows, 0, 0)
+		//TODO: This heap doesn't seem to be working. Need investigante further
+		heap.Init(&flows)
 		for fId, flow := range fm.flowTable {
 			if now.Sub(flow.lastUpdated) > MAX_AGE*fm.majorCycleTime {
 				delete(fm.flowTable, fId)
-				continue
+			}else{
+				heap.Push(&flows, &flowRank{flowId:fId, ratio:flow.A/flow.C})
 			}
-
-			flows = append(flows, &flowRank{flowId:fId, ratio:flow.A/flow.C})
 		}
 
-		heap.Init(&flows)
-
-		for i:=0; i<SUSPICIOUS_FLOWS_PER_CYCLE; i++{
+		log.Debug("Suspicious flows:")
+		for i:=0; i<len(flows) && i<SUSPICIOUS_FLOWS_PER_CYCLE; i++{
 			//TODO: Add suspicious flow to stateful monitor
-			log.Debug("Suspicious flow detected", "flow_id", flows[i].flowId)
+			log.Debug("\tDetected", "flow_id", flows[i].flowId.Hash(), "rank", flows[i].ratio)
 		}
 
 		// Clear all the bucket values so they can be used in the next major cycle

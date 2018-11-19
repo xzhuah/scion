@@ -16,7 +16,6 @@ package rpkt
 
 import (
 	"fmt"
-
 	"github.com/scionproto/scion/go/border/rcmn"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/sibra"

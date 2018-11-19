@@ -409,6 +409,12 @@
 			"revisionTime": "2017-05-24T16:52:02Z"
 		},
 		{
+			"checksumSHA1": "jAzqolwnRJhHsKXmmvKNrHqxqAw=",
+			"path": "github.com/spaolacci/murmur3",
+			"revision": "f09979ecbc725b9e6d41a297405f65e7e8804acc",
+			"revisionTime": "2018-01-18T20:28:30Z"
+		},
+		{
 			"checksumSHA1": "imvfVf7lRxu0Fz7V2G43CUC6Ff0=",
 			"path": "github.com/spf13/cobra",
 			"revision": "cd30c2a7e91a1d63fd9a0027accf18a681e9d50b",
@@ -444,6 +450,19 @@
 			"path": "github.com/vishvananda/netns",
 			"revision": "54f0e4339ce73702a0607f49922aaa1e749b418d",
 			"revisionTime": "2017-02-14T06:09:35Z"
+		},
+		{
+			"checksumSHA1": "+25Opx2Qr/VmlVeKxtbr+SHgoy0=",
+			"path": "github.com/willf/bitset",
+			"revision": "71fa2377963fc761fc6556dd5895dff5816d4e8c",
+			"revisionTime": "2018-10-14T16:12:41Z"
+		},
+		{
+			"checksumSHA1": "yyysY3Ior4jy2HtchTxlP1ayIvQ=",
+			"path": "github.com/willf/bloom",
+			"revision": "54e3b963ee1652b06c4562cb9b6020ebc6e36e59",
+			"revisionTime": "2017-05-05T22:16:40Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "IQkUIOnvlf0tYloFx9mLaXSvXWQ=",
