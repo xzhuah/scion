@@ -2,7 +2,6 @@ package flowmonitor
 
 import (
 	"github.com/scionproto/scion/go/lib/log"
-	"github.com/scionproto/scion/go/lib/sibra"
 	"github.com/willf/bloom"
 	"sync"
 	"time"
@@ -65,7 +64,7 @@ func NewBlacklist() *Blacklist{
 		stores:dataStores,
 	}
 
-	go bl.switchStore()
+	go bl.changeStores()
 
 	return bl
 }
@@ -77,7 +76,6 @@ func (bl *Blacklist)switchStore() {
 	}else{
 		nextStoreId=0
 	}
-	log.Debug("Switching blacklist store", "from", bl.currentStore, "to", nextStoreId)
 
 	bl.rwLock.Lock()
 	defer bl.rwLock.Unlock()
@@ -100,8 +98,9 @@ func (bl *Blacklist)IsFlowBlacklisted(id EphemeralId) bool {
 	return bl.stores[0].IsBlacklisted(id) || bl.stores[1].IsBlacklisted(id)
 }
 
-func (bl *Blacklist)ChangeStores() {
-	tick := time.Tick(sibra.MaxEphemTicks * sibra.TickInterval * time.Second)
+func (bl *Blacklist)changeStores() {
+	log.Debug("Starting blacklist filter switcher")
+	tick := time.Tick(16 * time.Second)
 	for {
 		select {
 			case <- tick:

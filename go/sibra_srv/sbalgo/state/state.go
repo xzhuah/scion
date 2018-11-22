@@ -16,8 +16,10 @@ package state
 
 import (
 	"fmt"
+	"github.com/scionproto/scion/go/lib/addr"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/sibra"
@@ -44,6 +46,8 @@ type SibraState struct {
 	Delta float64
 	// Topo is the topology.
 	Topo *topology.Topo
+	// Blacklisted IAs
+	BlacklistedAS map[addr.IAInt] time.Time
 }
 
 func NewSibraState(topo *topology.Topo, mat Matrix) (*SibraState, error) {
@@ -54,6 +58,7 @@ func NewSibraState(topo *topology.Topo, mat Matrix) (*SibraState, error) {
 		TempTable:  NewTempTable(),
 		Delta:      0.6,
 		Topo:       topo,
+		BlacklistedAS: make(map[addr.IAInt]time.Time),
 	}
 	s.SteadyMap = NewSteadyResvMap(s)
 	// Set bandwidth for interface pairs

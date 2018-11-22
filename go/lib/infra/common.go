@@ -136,6 +136,7 @@ const (
 	SIBRASteadyRep
 	SIBRASteadyReg
 	SIBRASteadyRegRep
+	SIBRABandwidthExceeded
 )
 
 func (mt MessageType) String() string {
@@ -172,6 +173,8 @@ func (mt MessageType) String() string {
 		return "SIBRASteadyRegistration"
 	case SIBRASteadyRegRep:
 		return "SIBRASteadyRegistrationReply"
+	case SIBRABandwidthExceeded:
+		return "SIBRABandwidthExceeded"
 	default:
 		return fmt.Sprintf("Unknown (%d)", mt)
 	}

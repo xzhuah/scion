@@ -551,7 +551,10 @@ func (m *Messenger) validate(pld *ctrl.Pld) (infra.MessageType, proto.Cerealizab
 			return infra.SIBRASteadyReq, pld.SibraMgmt.SteadyReq, nil
 		case proto.SibraMgmt_Which_sibraSteadyRep:
 			return infra.SIBRASteadyRep, pld.SibraMgmt.SteadyRep, nil
+		case proto.SibraMgmt_Which_sibraBWExceeded:
+			return infra.SIBRABandwidthExceeded, pld.SibraMgmt.BWExceeded, nil
 		default:
+			log.Debug("Unknown payload received")
 			return infra.None, nil,
 				common.NewBasicError("Unsupported SignedPld.CtrlPld.SibraMgmt.Xxx message type",
 					nil, "capnp_which", pld.PathMgmt.Which)

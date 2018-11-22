@@ -79,11 +79,14 @@ func setupNewConf(config *conf.Conf) error {
 		log.Root(),
 		nil,
 	)
+
 	config.Messenger.AddHandler(infra.SIBRAExtPkt, &ExternalHandler{})
 	config.Messenger.AddHandler(infra.SIBRAEphemReq, &ExternalHandler{})
 	config.Messenger.AddHandler(infra.SIBRAEphemRep, &ExternalHandler{})
 	config.Messenger.AddHandler(infra.SIBRASteadyReq, &dist.SteadyReqHandler{})
 	config.Messenger.AddHandler(infra.SIBRASteadyReg, &dist.SteadyRegHandler{})
+	config.Messenger.AddHandler(infra.SIBRABandwidthExceeded, &dist.BWExceededReqHandler{})
+
 	go func() {
 		defer fatal("Messenger crashed")
 		config.Messenger.ListenAndServe()

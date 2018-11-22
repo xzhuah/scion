@@ -52,6 +52,10 @@ struct SibraBlockMeta {
     mtu @6 :UInt16;
 }
 
+struct SibraBWExceeded {
+    id @0 :Data;    # Ephemeral flow ID
+    originIA @1 :UInt64;    # IA where the flow orginates from
+}
 
 struct SibraMgmt {
     union {
@@ -64,5 +68,6 @@ struct SibraMgmt {
         sibraSteadyRegRep @6 :SibraSteadyRegRep;
         sibraEphemReq @7 :SibraExternalPkt;
         sibraEphemRep @8 :SibraExternalPkt;
+        sibraBWExceeded @9 :SibraBWExceeded;
     }
 }

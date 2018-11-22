@@ -15,6 +15,7 @@
 package impl
 
 import (
+	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/sibra"
@@ -23,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/sibra/sbresv"
 	"github.com/scionproto/scion/go/sibra_srv/sbalgo"
 	"github.com/scionproto/scion/go/sibra_srv/sbalgo/state"
+	"time"
 )
 
 var _ sbalgo.EphemAdm = (*ephem)(nil)
@@ -31,7 +33,12 @@ type ephem struct {
 	*state.SibraState
 }
 
-func (e *ephem) AdmitEphemSetup(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes, error) {
+func (e *ephem) AdmitEphemSetup(steady *sbextn.Steady, p *sbreq.Pld, srcIA addr.IA) (sbalgo.EphemRes, error) {
+	if e.IsBlacklisted(srcIA){
+		return sbalgo.EphemRes{FailCode: sbreq.ClientDenied},
+		nil
+	}
+
 	if steady.IsTransfer() {
 		return e.setupTrans(steady, p)
 	}
@@ -182,7 +189,12 @@ func (e *ephem) addEntry(steady *state.SteadyResvEntry, id sibra.ID,
 	return steady.EphemResvMap.Add(id, entry)
 }
 
-func (e *ephem) AdmitEphemRenew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, error) {
+func (e *ephem) AdmitEphemRenew(ephem *sbextn.Ephemeral, p *sbreq.Pld, srcIA addr.IA) (sbalgo.EphemRes, error) {
+	if e.IsBlacklisted(srcIA){
+		return sbalgo.EphemRes{FailCode: sbreq.ClientDenied},
+			nil
+	}
+
 	if ephem.IsSteadyTransfer() {
 		return e.renewTrans(ephem, p)
 	}
@@ -463,4 +475,17 @@ func (e *ephem) cleanEntry(ephemId, steadyId sibra.ID, failed,
 	// expiration tick must be in the range.
 	err = stEntry.EphemeralBW.DeallocExpiring(uint64(cleaned.BwCls.Bps()), cleaned.ExpTick)
 	return sbreq.FailCodeNone, err
+}
+
+func (e *ephem)Blacklist(ia addr.IA, duration time.Duration){
+	e.BlacklistedAS[ia.IAInt()]=time.Now().Add(duration)
+}
+
+func (e *ephem)RemoveFromBlacklist(ia addr.IA){
+	delete(e.BlacklistedAS, ia.IAInt())
+}
+
+func (e *ephem)IsBlacklisted(ia addr.IA) bool{
+	_, exists := e.BlacklistedAS[ia.IAInt()]
+	return exists
 }

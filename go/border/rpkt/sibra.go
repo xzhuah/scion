@@ -16,7 +16,9 @@ package rpkt
 
 import (
 	"github.com/scionproto/scion/go/lib/sibra/flowmonitor"
+	"github.com/scionproto/scion/go/proto"
 	"hash"
+	"net"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,8 +34,44 @@ import (
 	"github.com/scionproto/scion/go/lib/topology"
 )
 
-type SIBRACallbackArgs struct {
+type SIBRACallbackArgs interface{
+	GetCerealizablePacket() proto.Cerealizable
+	Get()
+	Put()
+}
+
+// External packet is used to encapsulate packets originating outside BR
+type SIBRAExternalPacket struct {
 	RtrPkt *RtrPkt
+}
+
+func (pckt SIBRAExternalPacket) GetCerealizablePacket() proto.Cerealizable{
+	return &sibra_mgmt.ExternalPkt{RawPkt: pckt.RtrPkt.Raw}
+}
+
+func (pckt SIBRAExternalPacket) Get(){
+	pckt.RtrPkt.RefInc(1)
+}
+
+func (pckt SIBRAExternalPacket) Put(){
+	pckt.RtrPkt.Release()
+}
+
+// Internal packet is used by BR to send commands to SIBRA service
+type SIBRAInternalPacket struct {
+	Payload proto.Cerealizable
+}
+
+func (pckt SIBRAInternalPacket) GetCerealizablePacket() proto.Cerealizable{
+	return pckt.Payload
+}
+
+func (pckt SIBRAInternalPacket) Get(){
+	// We don't have ref counting here
+}
+
+func (pckt SIBRAInternalPacket) Put(){
+	// We don't have ref counting here
 }
 
 func (r *RtrPkt) processSibraMgmtSelf(p *sibra_mgmt.Pld) (HookResult, error) {
@@ -74,7 +112,7 @@ func (s *rSibraExtn) VerifySOF() (HookResult, error) {
 
 func (s *rSibraExtn) RouteSibraRequest() (HookResult, error) {
 	if s.rp.DirFrom == rcmn.DirExternal {
-		callbacks.sibraF(SIBRACallbackArgs{RtrPkt: s.rp})
+		callbacks.sibraF(SIBRAExternalPacket{RtrPkt: s.rp})
 		return HookFinish, nil
 	}
 	// If the packet is steady setup, there is no reservation block present
@@ -98,11 +136,23 @@ func (s *rSibraExtn) RouteSibraData() (HookResult, error) {
 }
 
 func (s *rSibraExtn) VerifyLocalFlowBW() (HookResult, error) {
+	//TODO: This part is only used for testing, should be removed!
+	hostAddr, _ := s.rp.SrcHost()
+	allowedIp := net.ParseIP("127.0.0.42")
+	if allowedIp.Equal(hostAddr.IP()){
+		return HookContinue, nil
+	}
+
+	s.rp.SrcHost() //TODO: This won't be needed once testing is done
+	s.rp.SrcIA()
+
 	flowInfo :=flowmonitor.FlowInfo{
 		BwCls:s.Info().BwCls,
 		PacketSize:len(s.rp.Raw),
 		ReservationId:s.IDs[0],
 		ReservationIndex:s.Info().Index,
+		SourceIA:s.rp.srcIA,
+		HostIP:s.rp.srcHost.IP(),
 	}
 
 	if callbacks.bandwidthLimitF(flowInfo, true){
@@ -113,11 +163,17 @@ func (s *rSibraExtn) VerifyLocalFlowBW() (HookResult, error) {
 }
 
 func (s *rSibraExtn) VerifyTransitFlowBW() (HookResult, error) {
+
+	s.rp.SrcHost() //TODO: This won't be needed once testing is done
+	s.rp.SrcIA()
+
 	flowInfo :=flowmonitor.FlowInfo{
 		BwCls:s.Info().BwCls,
 		PacketSize:len(s.rp.Raw),
 		ReservationId:s.IDs[0],
 		ReservationIndex:s.Info().Index,
+		SourceIA:s.rp.srcIA,
+		HostIP:s.rp.srcHost.IP(),
 	}
 
 	if callbacks.bandwidthLimitF(flowInfo, false){

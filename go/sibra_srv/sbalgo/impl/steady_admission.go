@@ -30,6 +30,11 @@ func admitSteady(s sbalgo.Algo, p sbalgo.AdmParams, topo *topology.Topo) (sbalgo
 	s.Lock()
 	defer s.Unlock()
 
+	//Check if AS requesting reservation has been blacklisted
+	if s.IsBlacklisted(p.Src){
+		return sbalgo.SteadyRes{Accepted:false}, nil
+	}
+
 	// Available already makes sure that mBw cannot be larger
 	// than capacity of the in or out link.
 	avail := s.Available(p.Ifids, p.Extn.GetCurrID())
@@ -55,7 +60,6 @@ func admitSteady(s sbalgo.Algo, p sbalgo.AdmParams, topo *topology.Topo) (sbalgo
 func logInfo(m string, p sbalgo.AdmParams, avail, ideal sibra.Bps, s sbalgo.Algo) {
 	log.Info(m, "id", p.Extn.GetCurrID(), "\navail", avail, "ideal", ideal,
 		"req", p.Req.MaxBw.Bps(), "ifids", p.Ifids, "\nState", s)
-
 }
 
 func validate(params sbalgo.AdmParams, topo *topology.Topo) error {

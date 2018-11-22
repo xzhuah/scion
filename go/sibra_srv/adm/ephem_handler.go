@@ -348,7 +348,7 @@ func (h *EphemHandler) HandleCleanRenew(pkt *conf.ExtPkt) error {
 }
 
 func admitSetupEphemResv(pkt *conf.ExtPkt) error {
-	res, err := pkt.Conf.SibraAlgo.AdmitEphemSetup(pkt.Steady, pkt.Pld)
+	res, err := pkt.Conf.SibraAlgo.AdmitEphemSetup(pkt.Steady, pkt.Pld, pkt.Spkt.SrcIA)
 	if err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ func admitSetupEphemResv(pkt *conf.ExtPkt) error {
 }
 
 func admitRenewEphemResv(pkt *conf.ExtPkt) error {
-	res, err := pkt.Conf.SibraAlgo.AdmitEphemRenew(pkt.Ephem, pkt.Pld)
+	res, err := pkt.Conf.SibraAlgo.AdmitEphemRenew(pkt.Ephem, pkt.Pld, pkt.Spkt.SrcIA)
 	if err != nil {
 		return err
 	}

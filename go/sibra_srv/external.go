@@ -66,7 +66,7 @@ func (h *ExternalHandler) handle(r *infra.Request) error {
 		Conf: conf.Get(),
 	}
 	if err := hpkt.ParseScnPkt(pkt.Spkt, rawPkt); err != nil {
-		return common.NewBasicError("Unable to parse SIBRA packet", err)
+		return common.NewBasicError("Unable to parse SCION packet", err)
 	}
 	sExtn, err := util.GetSibraExtn(pkt.Spkt)
 	if err != nil {
@@ -94,7 +94,6 @@ func (h *ExternalHandler) handle(r *infra.Request) error {
 		return h.handleRequest(pkt)
 	}
 	return common.NewBasicError("Dropping non-request packet", nil)
-
 }
 
 func (h *ExternalHandler) validate(base *sbextn.Base, pkt *conf.ExtPkt) error {

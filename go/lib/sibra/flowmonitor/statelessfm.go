@@ -1,12 +1,12 @@
 package flowmonitor
 
 import (
-	"container/heap"
 	"github.com/aviddiviner/go-murmur"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/sibra"
 	"math"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -20,7 +20,7 @@ const (
 
 	SCALE_FACTOR uint64 = 1000000
 
-	SUSPICIOUS_FLOWS_PER_CYCLE = 4
+	SUSPICIOUS_FLOWS_PER_CYCLE = 2
 )
 
 type minorCycle struct {
@@ -70,9 +70,15 @@ type StatelessFlowMonitor struct {
 
 	// Keep track of blacklisted flows
 	blacklist *Blacklist
+
+	// Used for detailed monitoring of suspicious flows
+	perFlowMonitoring *StatefulFlowMonitor
+
+	//TMP DEBUG STUFF
+	//knownFlows map[EphemeralId] net.IP
 }
 
-func NewStatelessFlowMonitor(minCycleTime time.Duration) FlowMonitor {
+func NewStatelessFlowMonitor(minCycleTime time.Duration) *StatelessFlowMonitor {
 	// TODO: This one needs to have a reference to the COLIBRI service messnger. We need to be able to blacklist ASes
 	res:= &StatelessFlowMonitor {
 		minorCycleTime:minCycleTime,
@@ -83,6 +89,10 @@ func NewStatelessFlowMonitor(minCycleTime time.Duration) FlowMonitor {
 		slowPathCommands:make(chan slowPathCommand),
 		flowTable:make(map[EphemeralId] flowTrack),
 		blacklist:NewBlacklist(),
+		perFlowMonitoring:NewStetefulMonitor(500*time.Millisecond),
+
+
+		//knownFlows:make(map[EphemeralId] net.IP),
 	}
 
 	go res.slowPath()
@@ -90,13 +100,32 @@ func NewStatelessFlowMonitor(minCycleTime time.Duration) FlowMonitor {
 	return res
 }
 
-func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) bool {
+func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) FlowMonitoringResult {
+	// Step 1: Check if flow has already been blacklisted
 	var flowId EphemeralId
 	copy(flowId[:], info.ReservationId[:sibra.EphemIDLen])
 	if fm.blacklist.IsFlowBlacklisted(flowId){
-		return true
+		return BANDWIDTH_EXCEEDED
 	}
 
+	//TODO: Remove this
+	//if _, ok := fm.knownFlows[flowId]; !ok{
+	//	log.Debug("New flow", "flowIP", info.HostIP, "flowHash", flowId.Hash())
+	//	fm.knownFlows[flowId]=make(net.IP, len(info.HostIP))
+	//	copy(fm.knownFlows[flowId], info.HostIP)
+	//}
+
+	// Step 2: Check if flow is monitored and if it exceeded the limit
+	if perFlowResult := fm.perFlowMonitoring.IsFlowRateExceeded(info, false); perFlowResult == BANDWIDTH_OK {
+		return BANDWIDTH_OK
+	}else if perFlowResult==BANDWIDTH_EXCEEDED {
+		log.Debug("Wooohoo, detected overuse flow!")
+		fm.blacklist.AddFlow(flowId)
+		fm.perFlowMonitoring.ClearFlow(info.ReservationId)
+		return BANDWIDTH_BLACKLIST
+	}
+
+	// Step 3: Increment bucket counters
 	now := time.Now()
 	var minorCycleIndex int
 	bufferIndex := fm.currentBufferIndex
@@ -135,12 +164,13 @@ func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) bool {
 	fm.minorCycles[bufferIndex][minorCycleIndex].counters[bucketInidex]+=normalizedPacketSize
 
 	if now.After(fm.nextSamplePeriod) && fm.sampledFlowsLength[bufferIndex] < FLOW_SAMPLES_PER_MAJOR_CYCLE {
-		copy(fm.sampledFlows[bufferIndex][fm.sampledFlowsLength[bufferIndex]][:], info.ReservationId[:sibra.EphemIDLen])
+		fm.sampledFlows[bufferIndex][fm.sampledFlowsLength[bufferIndex]]=flowId
+		//copy(fm.sampledFlows[bufferIndex][fm.sampledFlowsLength[bufferIndex]][:], info.ReservationId[:sibra.EphemIDLen])
 		fm.sampledFlowsLength[bufferIndex]++
 		fm.nextSamplePeriod = fm.nextSamplePeriod.Add(time.Duration(rand.ExpFloat64()/DISTRIBUTION_RATE)*time.Millisecond)
 	}
 
-	return false
+	return BANDWIDTH_OK
 }
 
 func (fm *StatelessFlowMonitor)ClearFlow(flow sibra.ID){
@@ -169,27 +199,16 @@ func (sf SuspiciousFlows) Swap(i, j int) {
 	sf[i], sf[j] = sf[j], sf[i]
 }
 
-func (sf *SuspiciousFlows) Push(x interface{}) {
-	item := x.(*flowRank)
-	*sf = append(*sf, item)
-}
-
-func (sf *SuspiciousFlows) Pop() interface{} {
-	old := *sf
-	n := len(old)
-	item := old[n-1]
-	*sf = old[0 : n-1]
-	return item
-}
-
 func (fm *StatelessFlowMonitor)slowPath(){
 	log.Debug("Starting slow path processing...")
-	for processCommand := range fm.slowPathCommands{
+	for processCommand := range fm.slowPathCommands {
 		bufferIndex := processCommand.bufferIndex
 		sampledFlowsCount := fm.sampledFlowsLength[bufferIndex]
 
+		//log.Debug("Active flows:")
 		activeFlows := make(map[EphemeralId] flowUsage)
 		for i:=0; i<sampledFlowsCount; i++{
+			//log.Debug("  ", "flow_id", fm.sampledFlows[bufferIndex][i].Hash())
 			activeFlows[fm.sampledFlows[bufferIndex][i]] = flowUsage{
 				data:0,
 				countedFlows:0,
@@ -258,23 +277,28 @@ func (fm *StatelessFlowMonitor)slowPath(){
 		now := time.Now()
 		// Clear the old counters
 		flows := make(SuspiciousFlows, 0, 0)
-		//TODO: This heap doesn't seem to be working. Need investigante further
-		heap.Init(&flows)
+		//TODO: This heap doesn't seem to be working. Need investigante further, for now using sort...
+		//heap.Init(&flows)
 		for fId, flow := range fm.flowTable {
 			if now.Sub(flow.lastUpdated) > MAX_AGE*fm.majorCycleTime {
 				delete(fm.flowTable, fId)
 			}else{
-				heap.Push(&flows, &flowRank{flowId:fId, ratio:flow.A/flow.C})
+				flows=append(flows, &flowRank{flowId:fId, ratio:flow.A/flow.C})
+				//heap.Push(&flows, &flowRank{flowId:fId, ratio:flow.A/flow.C})
 			}
 		}
+		sort.Sort(flows)
 
-		log.Debug("Suspicious flows:")
-		for i:=0; i<len(flows) && i<SUSPICIOUS_FLOWS_PER_CYCLE; i++{
-			//TODO: Add suspicious flow to stateful monitor
-			log.Debug("\tDetected", "flow_id", flows[i].flowId.Hash(), "rank", flows[i].ratio)
+		fm.perFlowMonitoring.RemoveOldFlows(sibra.TickInterval * time.Second * sibra.MaxEphemTicks)
+		for i:=0; i<len(flows) && i<SUSPICIOUS_FLOWS_PER_CYCLE; i++ {
+			//flowIP := fm.knownFlows[flows[i].flowId]
+			//log.Debug("Registring for detailed monitoring", "flow_hash", flows[i].flowId.Hash(), "IP", flowIP)
+			fm.perFlowMonitoring.RegisterFlow(flows[i].flowId)
 		}
 
 		// Clear all the bucket values so they can be used in the next major cycle
+
+		fm.sampledFlowsLength[bufferIndex]=0
 		for i:=0; i<MINOR_CYCLES_IN_MAJOR_CYCLE; i++{
 			fm.minorCycles[bufferIndex][i].clearCounters()
 		}

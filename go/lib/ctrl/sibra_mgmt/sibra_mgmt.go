@@ -32,6 +32,7 @@ type union struct {
 	SteadyReg    *SteadyReg    `capnp:"sibraSteadyReg"`
 	SteadyRegRep *SteadyRegRep `capnp:"sibraSteadyRegRep"`
 	SteadyRep    *SteadyRep    `capnp:"sibraSteadyRep"`
+	BWExceeded	 *BandwidthExceeded `capnp:"sibraBWExceeded"`
 }
 
 func (u *union) set(c proto.Cerealizable) error {
@@ -60,6 +61,9 @@ func (u *union) set(c proto.Cerealizable) error {
 	case *SteadyRegRep:
 		u.Which = proto.SibraMgmt_Which_sibraSteadyRegRep
 		u.SteadyRegRep = p
+	case *BandwidthExceeded:
+		u.Which = proto.SibraMgmt_Which_sibraBWExceeded
+		u.BWExceeded = p
 	default:
 		return common.NewBasicError("Unsupported sibra mgmt union type (set)", nil,
 			"type", common.TypeOf(c))
@@ -85,6 +89,8 @@ func (u *union) get() (proto.Cerealizable, error) {
 		return u.SteadyReg, nil
 	case proto.SibraMgmt_Which_sibraSteadyRegRep:
 		return u.SteadyRegRep, nil
+	case proto.SibraMgmt_Which_sibraBWExceeded:
+		return u.BWExceeded, nil
 	}
 	return nil, common.NewBasicError("Unsupported sibr mgmt union type (get)", nil, "type", u.Which)
 }

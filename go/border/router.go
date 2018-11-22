@@ -63,9 +63,9 @@ type Router struct {
 	// sibraQ is a channel for handling sibra request packets
 	sibraQ chan rpkt.SIBRACallbackArgs
 	// Rate limiting COLIBRI traffic for local reservations
-	localFlowMonitor flowmonitor.FlowMonitor
+	localFlowMonitor *flowmonitor.StatefulFlowMonitor
 	// Overusage flow monitor, used for COLIBRI traffic in transit
-	transitFlowMonitor flowmonitor.FlowMonitor
+	transitFlowMonitor *flowmonitor.StatelessFlowMonitor
 }
 
 func NewRouter(id, confDir string) (*Router, error) {

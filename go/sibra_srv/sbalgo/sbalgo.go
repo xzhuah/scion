@@ -16,6 +16,7 @@ package sbalgo
 
 import (
 	"sync"
+	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
@@ -29,6 +30,7 @@ type Algo interface {
 	sync.Locker
 	SteadyAdm
 	EphemAdm
+	ASBlacklist
 }
 
 type IFTuple struct {
@@ -73,10 +75,16 @@ type SteadyAdm interface {
 }
 
 type EphemAdm interface {
-	AdmitEphemSetup(steady *sbextn.Steady, p *sbreq.Pld) (EphemRes, error)
-	AdmitEphemRenew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (EphemRes, error)
+	AdmitEphemSetup(steady *sbextn.Steady, p *sbreq.Pld, srcIA addr.IA) (EphemRes, error)
+	AdmitEphemRenew(ephem *sbextn.Ephemeral, p *sbreq.Pld, srcIA addr.IA) (EphemRes, error)
 	CleanEphemSetup(steady *sbextn.Steady, p *sbreq.Pld) (sbreq.FailCode, error)
 	CleanEphemRenew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbreq.FailCode, error)
+}
+
+type ASBlacklist interface {
+	Blacklist(ia addr.IA, duration time.Duration)
+	IsBlacklisted(ia addr.IA) bool
+	RemoveFromBlacklist(ia addr.IA)
 }
 
 type SteadyRes struct {

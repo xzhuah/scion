@@ -15,14 +15,34 @@
 package main
 
 import (
+	"github.com/scionproto/scion/go/border/rpkt"
+	"github.com/scionproto/scion/go/lib/ctrl/sibra_mgmt"
+	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/sibra/flowmonitor"
 )
 
 // Used to verify if flow is exceeding reserved bandwidth
+// Returns true if flow has exceeded bandwidht and packet should be dropped
 func (r *Router) FlowMonitoringCallback(info flowmonitor.FlowInfo, isLocalFlow bool) bool {
+	var result flowmonitor.FlowMonitoringResult = flowmonitor.BANDWIDTH_OK
 	if isLocalFlow {
-		return r.localFlowMonitor.IsFlowRateExceeded(&info)
+		result = r.localFlowMonitor.IsFlowRateExceeded(&info, true)
 	}else{
-		return r.transitFlowMonitor.IsFlowRateExceeded(&info)
+		result = r.transitFlowMonitor.IsFlowRateExceeded(&info)
+	}
+
+	if result==flowmonitor.BANDWIDTH_BLACKLIST {
+		log.Debug("Blacklisting flow", "sibra_id", info.ReservationId)
+		r.SIBRACallback(rpkt.SIBRAInternalPacket{
+			Payload:&sibra_mgmt.BandwidthExceeded{
+				Id:info.ReservationId,
+				RawOriginIA:info.SourceIA.IAInt(),
+			},
+		})
+		return true
+	}else if result == flowmonitor.BANDWIDTH_EXCEEDED {
+		return true
+	}else{
+		return false
 	}
 }

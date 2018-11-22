@@ -1,11 +1,22 @@
 package flowmonitor
 
 import (
+	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/sibra"
 	"hash/fnv"
+	"net"
 )
 
 type EphemeralId [sibra.EphemIDLen]byte
+
+type FlowMonitoringResult int
+
+const (
+	BANDWIDTH_EXCEEDED FlowMonitoringResult = iota	// Packet should be dropped
+	BANDWIDTH_BLACKLIST	// Packet should be dropped and flow should be blacklisted
+	BANDWIDTH_OK	// Packet should be forwarded
+	FLOW_NOT_TRACKED	// Flow hasn't been registered for monitoring. Only makes sense when `addUnknownFlow` is set to false
+)
 
 func (eid EphemeralId)Hash() uint32 {
 	h:=fnv.New32()
@@ -18,9 +29,7 @@ type FlowInfo struct {
 	PacketSize int
 	ReservationId sibra.ID
 	ReservationIndex sibra.Index
-}
-
-type FlowMonitor interface {
-	IsFlowRateExceeded(info *FlowInfo) bool
-	ClearFlow(flow sibra.ID)
+	SourceIA addr.IA
+	// For debugging purposes
+	HostIP net.IP
 }

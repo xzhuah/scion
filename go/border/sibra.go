@@ -15,6 +15,7 @@
 package main
 
 import (
+	"github.com/scionproto/scion/go/proto"
 	"math/rand"
 	"sync/atomic"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl"
-	"github.com/scionproto/scion/go/lib/ctrl/sibra_mgmt"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/util/bufpool"
 )
@@ -31,12 +31,12 @@ import (
 // SIBRACallback adds SIBRA request to queue of requests which
 // are sent to the SIBRA service.
 func (r *Router) SIBRACallback(args rpkt.SIBRACallbackArgs) {
-	args.RtrPkt.RefInc(1)
+	args.Get()
 	select {
 	case r.sibraQ <- args:
 	default:
 		log.Debug("Dropping SIBRA request packet due to full queue")
-		args.RtrPkt.Release()
+		args.Put()
 	}
 }
 
@@ -45,18 +45,28 @@ func (r *Router) SIBRAFwd() {
 	defer log.LogPanicAndExit()
 	// Run forever.
 	for args := range r.sibraQ {
-		if err := r.fwdExternalSIBRARequest(args.RtrPkt); err != nil {
+		if err := r.fwdSibraRequest(args.GetCerealizablePacket()); err != nil {
 			log.Error("Unable to forward request to SIBRA service", "err", err)
 		}
-		args.RtrPkt.Release()
+		args.Put()
 	}
 }
 
-func (r *Router) fwdExternalSIBRARequest(rp *rpkt.RtrPkt) error {
+//func (r *Router) fwdExternalSIBRARequest(rp *rpkt.RtrPkt) error {
+//	log.Debug("Sending message to SIBRA srv")
+//	if testRes := r.fwdSibraRequest(&sibra_mgmt.BandwidthExceeded{}); testRes==nil{
+//		log.Debug("Successfully sent a message to sibra_srv")
+//	}else{
+//		log.Debug("There was an error sending message to sibra_srv", "error", testRes)
+//	}
+//	return r.fwdSibraRequest(&sibra_mgmt.ExternalPkt{RawPkt: rp.Raw})
+//}
+
+func (r *Router) fwdSibraRequest(cerealizable proto.Cerealizable) error {
 	ctx := rctx.Get()
 	// Pick first local address from topology as source.
 	srcAddr := ctx.Conf.Net.LocAddr.PublicAddrInfo(ctx.Conf.Net.LocAddr.Overlay)
-	cpld, err := ctrl.NewSibraMgmtPld(&sibra_mgmt.ExternalPkt{RawPkt: rp.Raw}, nil, nil)
+	cpld, err := ctrl.NewSibraMgmtPld(cerealizable, nil, nil)
 	if err != nil {
 		return common.NewBasicError("Unable to create ctrl payload", err)
 	}
