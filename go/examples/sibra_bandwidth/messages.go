@@ -5,6 +5,7 @@ import "github.com/scionproto/scion/go/lib/common"
 type Message interface {
 	Pack(common.RawBytes) common.RawBytes
 	Unpack(common.RawBytes)
+	Size() int
 }
 
 const (
@@ -20,6 +21,10 @@ type MsgCreateTest struct{
 	Packets uint64
 	Duration uint64
 	Mtu 	uint64
+}
+
+func (m *MsgCreateTest)Size() int {
+	return 4*8
 }
 
 func (m *MsgCreateTest)Pack(b common.RawBytes)  common.RawBytes{
@@ -41,6 +46,10 @@ type MsgTestCreated struct{
 	SessionId uint64
 }
 
+func (m *MsgTestCreated)Size() int {
+	return 2*8
+}
+
 func (m *MsgTestCreated)Pack(b common.RawBytes)  common.RawBytes{
 	common.Order.PutUint64(b, TestCreated)
 	common.Order.PutUint64(b[8:], m.SessionId)
@@ -55,6 +64,10 @@ func (m *MsgTestCreated)Unpack(b common.RawBytes){
 type MsgPayload struct{
 	SessionId uint64
 	PacketIndex uint64
+}
+
+func (m *MsgPayload)Size() int {
+	return 3*8
 }
 
 func (m *MsgPayload)Pack(b common.RawBytes)  common.RawBytes{
@@ -74,6 +87,10 @@ type MsgTestEnd struct{
 	SessionId uint64
 }
 
+func (m *MsgTestEnd)Size() int {
+	return 2*8
+}
+
 func (m *MsgTestEnd)Pack(b common.RawBytes)  common.RawBytes{
 	common.Order.PutUint64(b, TestEnd)
 	common.Order.PutUint64(b[8:], m.SessionId)
@@ -88,6 +105,10 @@ func (m *MsgTestEnd)Unpack(b common.RawBytes){
 type MsgTestResult struct{
 	SessionId uint64
 	DroppedPackets uint64
+}
+
+func (m *MsgTestResult)Size() int {
+	return 3*8
 }
 
 func (m *MsgTestResult)Pack(b common.RawBytes)  common.RawBytes{
