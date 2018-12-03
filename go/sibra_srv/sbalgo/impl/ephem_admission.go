@@ -35,6 +35,7 @@ type ephem struct {
 
 func (e *ephem) AdmitEphemSetup(steady *sbextn.Steady, p *sbreq.Pld, srcIA addr.IA) (sbalgo.EphemRes, error) {
 	if e.IsBlacklisted(srcIA){
+		log.Debug("Denying ephemeral reservation because it's blacklisted")
 		return sbalgo.EphemRes{FailCode: sbreq.ClientDenied},
 		nil
 	}
@@ -191,6 +192,7 @@ func (e *ephem) addEntry(steady *state.SteadyResvEntry, id sibra.ID,
 
 func (e *ephem) AdmitEphemRenew(ephem *sbextn.Ephemeral, p *sbreq.Pld, srcIA addr.IA) (sbalgo.EphemRes, error) {
 	if e.IsBlacklisted(srcIA){
+		log.Debug("Denying ephemeral reservation because it's blacklisted")
 		return sbalgo.EphemRes{FailCode: sbreq.ClientDenied},
 			nil
 	}

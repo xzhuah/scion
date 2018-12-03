@@ -73,8 +73,8 @@ func NewRouter(id, confDir string) (*Router, error) {
 	r := &Router{
 		Id: id,
 		confDir: confDir,
-		localFlowMonitor:flowmonitor.NewStetefulMonitor(500*time.Millisecond),
-		transitFlowMonitor:flowmonitor.NewStatelessFlowMonitor(100*time.Millisecond),
+		localFlowMonitor:flowmonitor.NewStetefulMonitor(400*time.Millisecond),
+		transitFlowMonitor:flowmonitor.NewStatelessFlowMonitor(500*time.Millisecond),
 	}
 	if err := r.setup(); err != nil {
 		return nil, err

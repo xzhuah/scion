@@ -82,7 +82,7 @@ type EphemAdm interface {
 }
 
 type ASBlacklist interface {
-	Blacklist(ia addr.IA, duration time.Duration)
+	Blacklist(ia addr.IA, baseDuration time.Duration)
 	IsBlacklisted(ia addr.IA) bool
 	RemoveFromBlacklist(ia addr.IA)
 }

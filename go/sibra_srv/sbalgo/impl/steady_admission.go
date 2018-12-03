@@ -32,6 +32,7 @@ func admitSteady(s sbalgo.Algo, p sbalgo.AdmParams, topo *topology.Topo) (sbalgo
 
 	//Check if AS requesting reservation has been blacklisted
 	if s.IsBlacklisted(p.Src){
+		log.Debug("Denying steady reservation because it's blacklisted")
 		return sbalgo.SteadyRes{Accepted:false}, nil
 	}
 

@@ -125,12 +125,12 @@ func (r *Reserver) isRecent(config *conf.Conf, e *state.SteadyResvEntry) bool {
 		return false
 	}
 	// XXX(roosd): Remove "false" for constant renewal requests in testing environment.
-	ia, _ := addr.IAFromString("2-ff00:0:222")
-	if ia.Eq(config.PublicAddr.IA) && false {
-		if time.Until(idx.Info.ExpTick.Time()) < (sibra.MaxSteadyTicks-4)*sibra.TickDuration {
-			return false
-		}
-	}
+	//ia, _ := addr.IAFromString("2-ff00:0:222")
+	//if ia.Eq(config.PublicAddr.IA) && false {
+	//	if time.Until(idx.Info.ExpTick.Time()) < (sibra.MaxSteadyTicks-4)*sibra.TickDuration {
+	//		return false
+	//	}
+	//}
 	if time.Until(idx.Info.ExpTick.Time()) < 5*sibra.TickDuration {
 		return false
 	}
@@ -231,8 +231,8 @@ func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index) {
 func (r *Reserver) setupResv(config *conf.Conf, res *conf.Resv) {
 	r.Debug("Starting setup request")
 	s := &SteadySetup{
-		ResvReqstr: &ResvReqstr{
-			Reqstr: &Reqstr{
+		ResvReqstr: &ResvReqstr {
+			Reqstr: &Reqstr {
 				Logger:  r.Logger.New("reqstr", "SteadySetup", "id", r.resvID, "idx", 0),
 				id:      r.resvID,
 				resvKey: r.resvKey,

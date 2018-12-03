@@ -15,6 +15,7 @@
 package conf
 
 import (
+	"github.com/scionproto/scion/go/sibra_srv/sbalgo/impl"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
@@ -37,7 +38,6 @@ import (
 	"github.com/scionproto/scion/go/lib/topology"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/sibra_srv/sbalgo"
-	"github.com/scionproto/scion/go/sibra_srv/sbalgo/impl"
 	"github.com/scionproto/scion/go/sibra_srv/sbalgo/state"
 )
 
