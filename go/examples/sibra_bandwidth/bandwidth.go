@@ -251,13 +251,13 @@ func (c *client) run() {
 	c.DisplayResults(uint64(packetNumber), droppedPacktes)
 }
 
-func calculatePacketCount(bandwidth, seconds, packetSize uint) (uint, time.Duration){
+func calculatePacketCount(bandwidth, seconds, packetSize uint) (uint64, time.Duration){
 	log.Debug("Calculating pace", "desired_bandwidth", bandwidth, "test_duration", seconds, "packet_size", packetSize)
 
 	totalData := bandwidth * seconds
 	totalPackets := totalData / (packetSize+l4.UDPLen)
 	pace := time.Duration(seconds * uint(time.Second)/totalPackets)
-	return totalPackets, pace
+	return uint64(totalPackets), pace
 }
 
 func (c *client) registerNewTest(packetNumber uint64, duration time.Duration, maxPacketLength int, rcvChannel <-chan common.RawBytes) uint64 {
