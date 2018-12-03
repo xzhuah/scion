@@ -18,7 +18,6 @@ import (
 	"github.com/scionproto/scion/go/lib/sibra/flowmonitor"
 	"github.com/scionproto/scion/go/proto"
 	"hash"
-	"net"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -136,14 +135,6 @@ func (s *rSibraExtn) RouteSibraData() (HookResult, error) {
 }
 
 func (s *rSibraExtn) VerifyLocalFlowBW() (HookResult, error) {
-	//TODO: This part is only used for testing, should be removed!
-	hostAddr, _ := s.rp.SrcHost()
-	allowedIp := net.ParseIP("127.0.0.42")
-	if allowedIp.Equal(hostAddr.IP()){
-		return HookContinue, nil
-	}
-
-	s.rp.SrcHost() //TODO: This won't be needed once testing is done
 	s.rp.SrcIA()
 
 	flowInfo :=flowmonitor.FlowInfo{
@@ -152,7 +143,6 @@ func (s *rSibraExtn) VerifyLocalFlowBW() (HookResult, error) {
 		ReservationId:s.IDs[0],
 		ReservationIndex:s.Info().Index,
 		SourceIA:s.rp.srcIA,
-		HostIP:s.rp.srcHost.IP(),
 	}
 
 	if callbacks.bandwidthLimitF(flowInfo, true){
@@ -163,8 +153,6 @@ func (s *rSibraExtn) VerifyLocalFlowBW() (HookResult, error) {
 }
 
 func (s *rSibraExtn) VerifyTransitFlowBW() (HookResult, error) {
-
-	s.rp.SrcHost() //TODO: This won't be needed once testing is done
 	s.rp.SrcIA()
 
 	flowInfo :=flowmonitor.FlowInfo{
@@ -173,7 +161,6 @@ func (s *rSibraExtn) VerifyTransitFlowBW() (HookResult, error) {
 		ReservationId:s.IDs[0],
 		ReservationIndex:s.Info().Index,
 		SourceIA:s.rp.srcIA,
-		HostIP:s.rp.srcHost.IP(),
 	}
 
 	if callbacks.bandwidthLimitF(flowInfo, false){

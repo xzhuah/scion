@@ -187,7 +187,7 @@ func (s *rSibraExtn) RegisterHooks(h *hooks) error {
 		if !s.BestEffort {
 			if s.rp.DirFrom == rcmn.DirLocal && s.CurrHop==0 {
 				h.Validate = append(h.Validate, s.VerifyLocalFlowBW)
-			} else if s.rp.DirFrom == rcmn.DirExternal && s.CurrHop==(s.TotalHops-1) { //TODO: This hops-1 comparison is only for testing, should be removed!
+			} else if s.rp.DirFrom == rcmn.DirExternal{
 				h.Validate = append(h.Validate, s.VerifyTransitFlowBW)
 			}
 		}
