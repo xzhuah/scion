@@ -242,7 +242,8 @@ func (c *client) run() {
 		testId = c.registerNewTest(uint64(packetNumber), testDuration, maxPacketLength, rcvChannel)
 		droppedPacktes = c.sendDataFromFile(packetTimings, testId, testDuration, maxPacketLength)
 	} else {
-		packetNumber, pace := calculatePacketCount(*bandwidth, *duration, *mtu)
+		var pace time.Duration
+		packetNumber, pace = calculatePacketCount(*bandwidth, *duration, *mtu)
 		testId = c.registerNewTest(uint64(packetNumber), time.Duration(*duration)*time.Second, 1000, rcvChannel)
 		droppedPacktes = c.sendDataConstantRate(uint64(packetNumber), uint64(pace), testId, uint64(*duration))
 	}
