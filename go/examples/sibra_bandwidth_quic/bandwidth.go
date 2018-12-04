@@ -419,6 +419,9 @@ func (c client) signal(ws *resvmgr.WatchState, stop chan struct{}) {
 		case <-stop:
 			return
 		case event := <-ws.Events:
+			if event==nil{
+				fmt.Println("ERROR! Event is null! WTF???")
+			}
 			switch event.Code {
 			case resvmgr.Quit:
 				log.Info("Quit reservation manager", "err", event.Error)
