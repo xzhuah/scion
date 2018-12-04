@@ -392,6 +392,7 @@ func (c client) setupPath(sibra bool) *resvmgr.WatchState {
 }
 
 func (c client) send() (int, time.Duration) {
+	fmt.Println("Starting to send data")
 	sendBuf := make(common.RawBytes, *mtu)
 	startTime:=time.Now()
 	endTime := startTime.Add(time.Duration(*duration)*time.Second)
