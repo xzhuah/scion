@@ -300,8 +300,6 @@ func (c *client) run() {
 	stop := make(chan struct{})
 	go c.read()
 	if ws != nil{
-		assert.Must(ws!=nil, "ws is null")
-		assert.Must(stop!=nil, "stop is null")
 		go c.signal(ws, stop)
 	}
 	sendData, testTime := c.send()
@@ -419,9 +417,7 @@ func (c client) signal(ws *resvmgr.WatchState, stop chan struct{}) {
 		case <-stop:
 			return
 		case event := <-ws.Events:
-			if event==nil{
-				fmt.Println("ERROR! Event is null! WTF???")
-			}
+			assert.Must(event!=nil, "Event is null!")
 			switch event.Code {
 			case resvmgr.Quit:
 				log.Info("Quit reservation manager", "err", event.Error)
