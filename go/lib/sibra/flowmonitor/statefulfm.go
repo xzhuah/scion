@@ -30,6 +30,8 @@ func NewStetefulMonitor(maxBurstAmount time.Duration)*StatefulFlowMonitor{
 }
 
 func (fm *StatefulFlowMonitor)IsFlowRateExceeded(info *FlowInfo, addUnknownFlow bool) FlowMonitoringResult {
+	now := time.Now()
+
 	var flowId EphemeralId
 	copy(flowId[:], info.ReservationId[:sibra.EphemIDLen])
 	var state *leakyBucket = nil
@@ -41,8 +43,8 @@ func (fm *StatefulFlowMonitor)IsFlowRateExceeded(info *FlowInfo, addUnknownFlow 
 		state=fs
 	} else if addUnknownFlow {
 		state = &leakyBucket{
-			createdTime:time.Now(),
-			nextSendTime:time.Now(),
+			createdTime:now,
+			nextSendTime:now,
 		}
 		fm.flowStates[flowId]=state
 	}else{
@@ -50,7 +52,6 @@ func (fm *StatefulFlowMonitor)IsFlowRateExceeded(info *FlowInfo, addUnknownFlow 
 		return FLOW_NOT_TRACKED
 	}
 
-	now:=time.Now()
 	rightMargin:=now.Add(fm.burstAmount)
 	if rightMargin.Before(state.nextSendTime) {
 		// Bandwidth exceeded!
