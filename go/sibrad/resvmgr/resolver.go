@@ -15,6 +15,7 @@
 package resvmgr
 
 import (
+	"github.com/scionproto/scion/go/lib/assert"
 	"sync"
 	"time"
 
@@ -436,6 +437,7 @@ func (r *resolver) getLocalSvcSB() (*snet.Addr, error) {
 func (r *resolver) notify(e *Event) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	assert.Must(e!=nil, "Event cannot be null!")
 	if !r.closed {
 		r.events <- e
 	}
