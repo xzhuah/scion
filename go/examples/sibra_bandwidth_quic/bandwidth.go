@@ -20,6 +20,7 @@ import (
 	"encoding/gob"
 	"flag"
 	"fmt"
+	"github.com/scionproto/scion/go/lib/assert"
 	"github.com/scionproto/scion/go/lib/spath/spathmeta"
 	"io"
 	"io/ioutil"
@@ -299,6 +300,8 @@ func (c *client) run() {
 	stop := make(chan struct{})
 	go c.read()
 	if ws != nil{
+		assert.Must(ws!=nil, "ws is null")
+		assert.Must(stop!=nil, "stop is null")
 		go c.signal(ws, stop)
 	}
 	sendData, testTime := c.send()
