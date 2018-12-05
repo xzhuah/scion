@@ -452,7 +452,6 @@ func (r *resolver) refire(wait time.Duration) {
 func (r *resolver) quit(err error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	log.Debug("Sending quit message to events chanel")
 	if !r.closed {
 		r.quitChan <- quitSignal{
 			key: r.key,
@@ -462,7 +461,7 @@ func (r *resolver) quit(err error) {
 			Code:  Quit,
 			Error: err,
 		}
-		//close(r.events)
+		close(r.events)
 		r.closed = true
 	}
 }

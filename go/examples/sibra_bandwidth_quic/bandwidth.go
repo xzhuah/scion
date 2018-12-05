@@ -20,7 +20,6 @@ import (
 	"encoding/gob"
 	"flag"
 	"fmt"
-	"github.com/scionproto/scion/go/lib/assert"
 	"github.com/scionproto/scion/go/lib/spath/spathmeta"
 	"io"
 	"io/ioutil"
@@ -416,34 +415,39 @@ func (c client) signal(ws *resvmgr.WatchState, stop chan struct{}) {
 		select {
 		case <-stop:
 			return
-		case event := <-ws.Events:
-			assert.Must(event!=nil, "Event is null!")
-			switch event.Code {
-			case resvmgr.Quit:
-				log.Info("Quit reservation manager", "err", event.Error)
-			case resvmgr.ExtnExpired:
-				log.Info("Reservation expired", "err", event.Error)
-			case resvmgr.Error:
-				log.Error("Error occured", "err", event.Error)
-			case resvmgr.ExtnCleaned:
-				log.Debug("Reservation cleaned")
-			case resvmgr.ExtnUpdated:
-				ext, _ := ws.SyncResv.Load().GetExtn()
-				_, ephem := ext.(*sbextn.Ephemeral)
-				log.Debug("Notify server to use new extension", "ephem", ephem)
-				packed, err := ext.Pack()
-				if err != nil {
-					log.Error("Unable to pack extension", "err", err)
-					continue
+		case event, more := <-ws.Events:
+			if more{
+				switch event.Code {
+				case resvmgr.Quit:
+					log.Info("Quit reservation manager", "err", event.Error)
+				case resvmgr.ExtnExpired:
+					log.Info("Reservation expired", "err", event.Error)
+				case resvmgr.Error:
+					log.Error("Error occured", "err", event.Error)
+				case resvmgr.ExtnCleaned:
+					log.Debug("Reservation cleaned")
+				case resvmgr.ExtnUpdated:
+					ext, _ := ws.SyncResv.Load().GetExtn()
+					_, ephem := ext.(*sbextn.Ephemeral)
+					log.Debug("Notify server to use new extension", "ephem", ephem)
+					packed, err := ext.Pack()
+					if err != nil {
+						log.Error("Unable to pack extension", "err", err)
+						continue
+					}
+					err = c.signalStream.WriteSignal(&message{Data: packed})
+					if err != nil {
+						log.Error("Unable to write signal", "err", err)
+						continue
+					}
+				default:
+					log.Error("Unhandled event", "code", event.Code)
 				}
-				err = c.signalStream.WriteSignal(&message{Data: packed})
-				if err != nil {
-					log.Error("Unable to write signal", "err", err)
-					continue
-				}
-			default:
-				log.Error("Unhandled event", "code", event.Code)
+			}else{
+				log.Info("Communication chanel with WS is closed. exiting!")
+				return
 			}
+
 		}
 	}
 	// After sending the last ping, set a ReadDeadline on the stream
