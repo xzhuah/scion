@@ -403,6 +403,7 @@ func (c client) send() (int, time.Duration) {
 		totalDataSent+=n
 		if time.Now().After(endTime){
 			log.Debug("Test has finished")
+			c.Close()
 			break
 		}
 	}
