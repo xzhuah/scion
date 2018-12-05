@@ -303,6 +303,10 @@ func (c *client) run() {
 	}
 	sendData, testTime := c.send()
 	showStatistics(sendData, testTime)
+	err = c.Close()
+	if err!=nil{
+		log.Warn("Error occured while closing the connection", "err", err)
+	}
 	close(stop)
 }
 
@@ -403,7 +407,6 @@ func (c client) send() (int, time.Duration) {
 		totalDataSent+=n
 		if time.Now().After(endTime){
 			log.Debug("Test has finished")
-			c.Close()
 			break
 		}
 	}
