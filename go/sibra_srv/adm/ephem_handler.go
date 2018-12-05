@@ -43,7 +43,7 @@ type EphemHandler struct{}
 /////////////////////////////////////////
 
 func (h *EphemHandler) HandleSetupResvReqEndAS(pkt *conf.ExtPkt) error {
-	log.Debug("Handling ephemeral request on end AS", "ids", pkt.Steady.IDs)
+	log.Debug("Handling ephemeral setup request on end AS", "ids", pkt.Steady.IDs)
 	if err := admitSetupEphemResv(pkt); err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (h *EphemHandler) HandleSetupResvReqEndAS(pkt *conf.ExtPkt) error {
 		return h.reverseAndForward(pkt)
 	}
 	if err := h.sendReqToClient(pkt, h.getTimeout(pkt)); err != nil {
-		log.Debug("Unable to send request to client", "err", err)
+		log.Warn("Unable to send  setup request to client", "err", err)
 		res := sbalgo.EphemRes{
 			FailCode: sbreq.ClientDenied,
 			MaxBw:    0,
@@ -98,7 +98,7 @@ func (h *EphemHandler) sendReqToClient(pkt *conf.ExtPkt, to time.Duration) error
 }
 
 func (h *EphemHandler) HandleRenewResvReqEndAS(pkt *conf.ExtPkt) error {
-	log.Debug("Handling ephemeral request on end AS", "ids", pkt.Ephem.IDs)
+	log.Debug("Handling ephemeral renewal request on end AS", "ids", pkt.Ephem.IDs)
 	if err := admitRenewEphemResv(pkt); err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (h *EphemHandler) HandleRenewResvReqEndAS(pkt *conf.ExtPkt) error {
 		return h.reverseAndForward(pkt)
 	}
 	if err := h.sendReqToClient(pkt, h.getTimeout(pkt)); err != nil {
-		log.Debug("Unable to send request to client", "err", err)
+		log.Warn("Unable to send renewal request to client", "err", err)
 		res := sbalgo.EphemRes{
 			FailCode: sbreq.ClientDenied,
 			MaxBw:    0,
