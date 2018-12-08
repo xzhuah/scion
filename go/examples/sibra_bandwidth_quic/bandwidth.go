@@ -420,20 +420,20 @@ func (c client) signal(ws *resvmgr.WatchState, stop chan struct{}) {
 		case <-stop:
 			return
 		case event, more := <-ws.Events:
-			if more{
+			if more {
 				switch event.Code {
 				case resvmgr.Quit:
-					log.Info("Quit reservation manager", "err", event.Error)
+					log.Info("WS: Quit reservation manager", "err", event.Error)
 				case resvmgr.ExtnExpired:
-					log.Info("Reservation expired", "err", event.Error)
+					log.Info("WS: Reservation expired", "err", event.Error)
 				case resvmgr.Error:
-					log.Error("Error occured", "err", event.Error)
+					log.Error("WS: Error occured", "err", event.Error)
 				case resvmgr.ExtnCleaned:
 					log.Debug("Reservation cleaned")
 				case resvmgr.ExtnUpdated:
 					ext, _ := ws.SyncResv.Load().GetExtn()
 					_, ephem := ext.(*sbextn.Ephemeral)
-					log.Debug("Notify server to use new extension", "ephem", ephem)
+					log.Debug("WS: Notify server to use new extension", "ephem", ephem)
 					packed, err := ext.Pack()
 					if err != nil {
 						log.Error("Unable to pack extension", "err", err)

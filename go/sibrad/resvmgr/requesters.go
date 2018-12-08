@@ -101,7 +101,7 @@ type reqstr struct {
 }
 
 func (r *reqstr) Run(i reqstrI) {
-	r.Debug("Starting requester")
+	r.Info("Starting requester")
 	var err error
 	r.extn, r.pld, err = i.PrepareRequest()
 	if err != nil {
@@ -424,7 +424,7 @@ func (c *EphemCleanSetup) PrepareRequest() (common.Extension, *sbreq.Pld, error)
 		TimeStamp: uint32(time.Now().Unix()),
 		Accepted:  true,
 		Auths:     make([]common.RawBytes, steady.TotalHops),
-		Data: &sbreq.EphemClean{
+		Data: &sbreq.EphemClean {
 			Setup: true,
 			ID:    c.id,
 			Info:  c.FailedInfo,

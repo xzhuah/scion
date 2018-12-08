@@ -106,7 +106,7 @@ func (h *EphemHandler) HandleRenewResvReqEndAS(pkt *conf.ExtPkt) error {
 		return h.reverseAndForward(pkt)
 	}
 	if err := h.sendReqToClient(pkt, h.getTimeout(pkt)); err != nil {
-		log.Warn("Unable to send renewal request to client", "err", err)
+		log.Warn("Unable to send renewal request to client", "err", err, "was_accepted", pkt.Pld.Accepted)
 		res := sbalgo.EphemRes{
 			FailCode: sbreq.ClientDenied,
 			MaxBw:    0,

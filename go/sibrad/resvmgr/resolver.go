@@ -94,7 +94,7 @@ func (r *resolver) handle() (bool, error) {
 		if quit, err := r.resolveSteady(entry, path); quit || err != nil {
 			return quit, err
 		}
-		log.Debug("Updated steady reservation")
+		log.Info("Updated steady reservation")
 	}
 	if entry.ephemMeta == nil {
 		return false, nil
@@ -108,21 +108,21 @@ func (r *resolver) handle() (bool, error) {
 			r.notify(&Event{Code: ExtnExpired})
 			entry.ephemMeta.state = start
 			entry.syncResv.UpdateEphem(nil)
-			log.Debug("Updated ephemeral reservation")
+			log.Info("Eph reservaion expired. Updated store to nil!")
 		}
 		switch entry.ephemMeta.state {
 		case ephemRequested, cleanUp:
 			// Ignore. Need to wait until the state changes.
 		case start:
-			log.Debug("Configuring ephemeral reservation")
+			log.Info("Configuring ephemeral reservation")
 			return r.setupEphem(entry, path, localSvcSB)
 		case ephemExists:
 			ext := entry.syncResv.Load().Ephemeral
 			if ext == nil || ext.Expiry().Before(time.Now()) {
-				log.Debug("Setting up ephemeral")
+				log.Info("Setting up ephemeral cuz it expired")
 				return r.setupEphem(entry, path, localSvcSB)
 			} else if r.needRenewal(ext, entry) {
-				log.Debug("Renewing ephemeral reservation")
+				log.Info("Renewing ephemeral reservation!")
 				return r.renewEphem(entry, ext, path, localSvcSB)
 			}
 		}
@@ -238,7 +238,7 @@ func (r *resolver) handleSetupTimeout(entry *resvEntry, request *sbreq.EphemReq,
 
 	r.notify(&Event{
 		Code:  Error,
-		Error: common.NewBasicError("Request timed out", nil, "key", r.key),
+		Error: common.NewBasicError("Setup request timed out", nil, "key", r.key),
 	})
 	r.refire(r.timers.ErrorRefire)
 }
@@ -343,7 +343,7 @@ func (r *resolver) handleRenewTimeout(entry *resvEntry, ephemId sibra.ID,
 
 	r.notify(&Event{
 		Code:  Error,
-		Error: common.NewBasicError("Request timed out", nil, "key", r.key),
+		Error: common.NewBasicError("Renew request timed out", nil, "key", r.key),
 	})
 	r.refire(r.timers.ErrorRefire)
 }
