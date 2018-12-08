@@ -31,6 +31,7 @@ import (
 // SIBRACallback adds SIBRA request to queue of requests which
 // are sent to the SIBRA service.
 func (r *Router) SIBRACallback(args rpkt.SIBRACallbackArgs) {
+	log.Debug("Forwarding packet to sibra service!")
 	args.Get()
 	select {
 	case r.sibraQ <- args:

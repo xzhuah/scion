@@ -429,11 +429,11 @@ func (c client) signal(ws *resvmgr.WatchState, stop chan struct{}) {
 				case resvmgr.Error:
 					log.Error("WS: Error occured", "err", event.Error)
 				case resvmgr.ExtnCleaned:
-					log.Debug("Reservation cleaned")
+					log.Info("Reservation cleaned")
 				case resvmgr.ExtnUpdated:
 					ext, _ := ws.SyncResv.Load().GetExtn()
 					_, ephem := ext.(*sbextn.Ephemeral)
-					log.Debug("WS: Notify server to use new extension", "ephem", ephem)
+					log.Info("WS: Notify server to use new extension", "ephem", ephem)
 					packed, err := ext.Pack()
 					if err != nil {
 						log.Error("Unable to pack extension", "err", err)
