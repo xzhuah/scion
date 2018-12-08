@@ -238,7 +238,7 @@ type SteadySetup struct {
 
 func (s *SteadySetup) probeRLC() (sibra.RLC, error) {
 	// FIXME(roosd): Probe RLC instead of using conservative value.
-	rlc := sibra.DurationToRLC(500*time.Millisecond, false)
+	rlc := sibra.DurationToRLC(2*time.Second, false)
 	s.timeout = rlc.Duration()
 	return rlc, nil
 }
