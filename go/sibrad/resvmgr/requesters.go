@@ -132,6 +132,7 @@ func (r *reqstr) Run(i reqstrI) {
 			r.failFunc(i)
 		}
 	case <-time.After(r.timeout):
+		log.Warn("Timeout expired", "timeout", r.timeout)
 		r.callTimeOut(i)
 	}
 }
