@@ -204,6 +204,7 @@ func (e *ephem) AdmitEphemRenew(ephem *sbextn.Ephemeral, p *sbreq.Pld, srcIA add
 }
 
 func (e *ephem) renew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, error) {
+	log.Debug("Renewing ephemeral traffic on NON transfer AS")
 	info := e.extractInfo(p, false)
 	if info == nil {
 		return sbalgo.EphemRes{FailCode: sbreq.InvalidInfo}, nil
@@ -240,6 +241,7 @@ func (e *ephem) renew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, e
 }
 
 func (e *ephem) renewTrans(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, error) {
+	log.Debug("Renewing ephemeral traffic on transfer AS")
 	info := e.extractInfo(p, false)
 	if info == nil {
 		log.Debug("invalid info validate")
