@@ -223,6 +223,7 @@ func (e *ephem) renew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, e
 
 	// If request has already been processed, no need to do anything again
 	if res, exists := e.isAlreadyRegistered(ephemEntry, info); exists{
+		log.Debug("Renew request has already been processed.")
 		return res, nil
 	}
 
