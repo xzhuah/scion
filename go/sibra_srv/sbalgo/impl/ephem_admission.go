@@ -220,6 +220,12 @@ func (e *ephem) renew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, e
 	if !ok {
 		return sbalgo.EphemRes{FailCode: sbreq.EphemNotExists}, nil
 	}
+
+	// If request has already been processed, no need to do anything again
+	if res, exists := e.isAlreadyRegistered(ephemEntry, info); exists{
+		return res, nil
+	}
+
 	res, alloc, undo, err := e.exchangeExpiring(stEntry, ephemEntry, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
 		return res, err
@@ -326,6 +332,24 @@ func (e *ephem) exchangeExpiring(stEntry *state.SteadyResvEntry,
 		MaxBw:   maxBw,
 	}
 	return res, sibra.Bps(alloc), u, err
+}
+
+func (e *ephem) isAlreadyRegistered(ephemEntry *state.EphemResvEntry, info *sbresv.Info) (sbalgo.EphemRes, bool) {
+	if ephemEntry.ActiveIdx.Info.Index == info.Index &&
+		ephemEntry.ActiveIdx.Info.BwCls == info.BwCls &&
+		ephemEntry.ActiveIdx.Info.ExpTick == info.ExpTick &&
+		ephemEntry.ActiveIdx.Info.PathType == info.PathType &&
+		ephemEntry.ActiveIdx.Info.RLC == info.RLC {
+
+		maxBw := sibra.Bps(ephemEntry.ActiveIdx.Allocated).ToBwCls(true)
+		res := sbalgo.EphemRes{
+			AllocBw: maxBw,
+			MaxBw:   maxBw,
+		}
+		return res, true
+	} else {
+		return sbalgo.EphemRes{FailCode:sbreq.EphemNotExists}, false
+	}
 }
 
 func (e *ephem) extractInfo(pld *sbreq.Pld, setup bool) *sbresv.Info {

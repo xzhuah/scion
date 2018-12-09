@@ -306,6 +306,7 @@ func (r *resolver) handleRenewTimeoutRefire(entry *resvEntry, err error) {
 	log.Info("Handling timeout! refiring reservation!")
 	entry.Lock()
 	entry.Unlock()
+	entry.ephemMeta.state=ephemExists
 	r.notify(&Event{
 		Code:  Error,
 		Error: err,
