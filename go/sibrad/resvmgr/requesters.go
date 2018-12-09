@@ -182,7 +182,7 @@ func (r *reqstr) sendRequest() error {
 		},
 	}
 	err = r.msgr.SendSibraEphemReq(ctx, req, r.localSvcSB, requestID.Next())
-	return nil
+	return err
 }
 
 type reserver struct {

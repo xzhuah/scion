@@ -289,8 +289,9 @@ func (r *resolver) renewEphem(entry *resvEntry, ext *sbextn.Ephemeral,
 					r.handleResvErr(entry, ephemExists, err)
 				},
 				timeFunc: func(i reqstrI) {
-					request := i.GetPld().Data.(*sbreq.EphemReq)
-					r.handleRenewTimeout(entry, ephemId, request, p.Entry.Path.DstIA(), sb)
+					//request := i.GetPld().Data.(*sbreq.EphemReq)
+					//r.handleRenewTimeout(entry, ephemId, request, p.Entry.Path.DstIA(), sb)
+					r.handleRenewTimeoutRefire(entry, common.NewBasicError("Renewal request timed out. Trying again", nil))
 				},
 			},
 			bwCls: bwCls,
@@ -299,6 +300,17 @@ func (r *resolver) renewEphem(entry *resvEntry, ext *sbextn.Ephemeral,
 	entry.ephemMeta.state = ephemRequested
 	go reqstr.Run(reqstr)
 	return false, nil
+}
+
+func (r *resolver) handleRenewTimeoutRefire(entry *resvEntry, err error) {
+	log.Info("Handling timeout! refiring reservation!")
+	entry.Lock()
+	entry.Unlock()
+	r.notify(&Event{
+		Code:  Error,
+		Error: err,
+	})
+	r.refire(r.timers.ErrorRefire)
 }
 
 func (r *resolver) handleRenewTimeout(entry *resvEntry, ephemId sibra.ID,
