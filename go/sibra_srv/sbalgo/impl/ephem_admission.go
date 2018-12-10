@@ -59,9 +59,14 @@ func (e *ephem) setup(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes, err
 		return e.checkBw(stEntry, info), nil
 	}
 	id := p.Data.(*sbreq.EphemReq).ID
-	_, ok := stEntry.EphemResvMap.Get(id)
-	if ok {
-		return sbalgo.EphemRes{FailCode: sbreq.EphemExists}, nil
+	ephEntry, exists := stEntry.EphemResvMap.Get(id)
+	if exists {
+		// In case this is a retransmit of setup request, just propagate it further
+		if res, ok := e.isAlreadyRegistered(ephEntry, info); ok {
+			return res, nil
+		}else{
+			return sbalgo.EphemRes{FailCode: sbreq.EphemExists}, nil
+		}
 	}
 	res, alloc, err := e.allocExpiring(stEntry, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
