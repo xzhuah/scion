@@ -2,6 +2,7 @@ package flowmonitor
 
 import (
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/sibra"
 	"github.com/willf/bloom"
 	"sync"
 	"time"
@@ -14,35 +15,25 @@ const (
 
 type blacklistedFlowsStore struct {
 	probabilisticStore *bloom.BloomFilter
-	blacklistedFlows map[EphemeralId]bool
 }
 
 func newBLStore() *blacklistedFlowsStore{
 	res := &blacklistedFlowsStore{
 		probabilisticStore:bloom.New(EXPECTED_FLOW_COUNT,HASH_FUNCTINOS),
-		blacklistedFlows:make(map[EphemeralId]bool),
 	}
-
 	return res
 }
 
 func (bls *blacklistedFlowsStore )BlacklistFlow(id EphemeralId){
-	bls.blacklistedFlows[id]=true
 	bls.probabilisticStore.Add(id[:])
 }
 
 func (bls *blacklistedFlowsStore )IsBlacklisted(id EphemeralId) bool{
-	if bls.probabilisticStore.Test(id[:]){
-		_, ok := bls.blacklistedFlows[id]
-		return ok
-	}else{
-		return false
-	}
+	return bls.probabilisticStore.Test(id[:])
 }
 
 func (bls *blacklistedFlowsStore )ClearAllFlows(){
 	bls.probabilisticStore.ClearAll()
-	bls.blacklistedFlows=make(map[EphemeralId]bool)
 }
 
 type Blacklist struct {
@@ -100,7 +91,7 @@ func (bl *Blacklist)IsFlowBlacklisted(id EphemeralId) bool {
 
 func (bl *Blacklist)changeStores() {
 	log.Debug("Starting blacklist filter switcher")
-	tick := time.Tick(16 * time.Second)
+	tick := time.Tick(sibra.MaxEphemTicks*sibra.TickInterval*time.Second)
 	for {
 		select {
 			case <- tick:

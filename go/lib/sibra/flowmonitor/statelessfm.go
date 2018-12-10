@@ -73,13 +73,9 @@ type StatelessFlowMonitor struct {
 
 	// Used for detailed monitoring of suspicious flows
 	perFlowMonitoring *StatefulFlowMonitor
-
-	//TMP DEBUG STUFF
-	//knownFlows map[EphemeralId] net.IP
 }
 
 func NewStatelessFlowMonitor(minCycleTime time.Duration) *StatelessFlowMonitor {
-	// TODO: This one needs to have a reference to the COLIBRI service messnger. We need to be able to blacklist ASes
 	res:= &StatelessFlowMonitor {
 		minorCycleTime:minCycleTime,
 		majorCycleBegin:time.Now(),
@@ -90,9 +86,6 @@ func NewStatelessFlowMonitor(minCycleTime time.Duration) *StatelessFlowMonitor {
 		flowTable:make(map[EphemeralId] flowTrack),
 		blacklist:NewBlacklist(),
 		perFlowMonitoring:NewStetefulMonitor(500*time.Millisecond),
-
-
-		//knownFlows:make(map[EphemeralId] net.IP),
 	}
 
 	go res.slowPath()
@@ -107,13 +100,6 @@ func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) FlowMonitoring
 	if fm.blacklist.IsFlowBlacklisted(flowId){
 		return BANDWIDTH_EXCEEDED
 	}
-
-	//TODO: Remove this
-	//if _, ok := fm.knownFlows[flowId]; !ok{
-	//	log.Debug("New flow", "flowIP", info.HostIP, "flowHash", flowId.Hash())
-	//	fm.knownFlows[flowId]=make(net.IP, len(info.HostIP))
-	//	copy(fm.knownFlows[flowId], info.HostIP)
-	//}
 
 	// Step 2: Check if flow is monitored and if it exceeded the limit
 	if perFlowResult := fm.perFlowMonitoring.IsFlowRateExceeded(info, false); perFlowResult == BANDWIDTH_OK {
