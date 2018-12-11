@@ -241,14 +241,14 @@ func (c *client) run() {
 	go c.read(rcvChannel)	// Reading all messages that are coming
 	fmt.Println("Created read goroutine")
 
-	var droppedPacktes uint64
+	var droppedPacktes uint64 = 0
 	var testId uint64
 	var packetNumber uint64
 	if packetTimings != nil {
-		packetNumber=uint64(len(packetTimings)) * uint64(*repeatFlowFile)
+		packetNumber = uint64(len(packetTimings)) * uint64(*repeatFlowFile)
 		testId = c.registerNewTest(uint64(packetNumber), testDuration, maxPacketLength, rcvChannel)
-		for i:=0; i<int(*repeatFlowFile); i++{
-			droppedPacktes = c.sendDataFromFile(packetTimings, testId, testDuration, maxPacketLength)
+		for i:=0; i<int(*repeatFlowFile); i++ {
+			droppedPacktes += c.sendDataFromFile(packetTimings, testId, testDuration, maxPacketLength)
 		}
 	} else {
 		var pace time.Duration
