@@ -101,13 +101,17 @@ func (e *ephem) setupTrans(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes
 		return in, nil
 	}
 	id := p.Data.(*sbreq.EphemReq).ID
-	_, ok := stIngress.EphemResvMap.Get(id)
-	if ok {
-		return sbalgo.EphemRes{FailCode: sbreq.EphemExists}, nil
-	}
-	_, ok = stEgress.EphemResvMap.Get(id)
-	if ok {
-		return sbalgo.EphemRes{FailCode: sbreq.EphemExists}, nil
+	ingressEphReserv, ingressPresent := stIngress.EphemResvMap.Get(id)
+	egressEphReserv, egressPresent := stEgress.EphemResvMap.Get(id)
+	if ingressPresent && egressPresent {
+		// If both registrations are present in egress and ingress, we return the reservation
+		_, registeredIngress := e.isAlreadyRegistered(ingressEphReserv, info)
+		res, registeredEgress := e.isAlreadyRegistered(egressEphReserv, info)
+		if registeredIngress && registeredEgress{
+			return res, nil
+		}else{
+			return sbalgo.EphemRes{FailCode: sbreq.EphemExists}, nil
+		}
 	}
 	res, allocIngress, err := e.allocExpiring(stIngress, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
@@ -229,7 +233,7 @@ func (e *ephem) renew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, e
 
 	// If request has already been processed, no need to do anything again
 	if res, exists := e.isAlreadyRegistered(ephemEntry, info); exists{
-		log.Debug("Renew request has already been processed.")
+		log.Debug("Renew request has already been processed. Skipping admission")
 		return res, nil
 	}
 
@@ -276,6 +280,14 @@ func (e *ephem) renewTrans(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemR
 	if !ok {
 		return sbalgo.EphemRes{FailCode: sbreq.EphemNotExists}, nil
 	}
+
+	_, registeredIngress := e.isAlreadyRegistered(epIngress, info)
+	res, registeredEgress := e.isAlreadyRegistered(epEgress, info)
+	if registeredIngress && registeredEgress{
+		log.Debug("Eph reservatino is alredy accepted, skipping admission")
+		return res, nil
+	}
+
 	res, allocIngress, undoIngress, err := e.exchangeExpiring(stIngress, epIngress, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
 		return res, err
