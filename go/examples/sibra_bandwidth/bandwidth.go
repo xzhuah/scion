@@ -90,6 +90,7 @@ var (
 	bandwidth = flag.Uint("bandwidth", 1024, "Bandwidth at which to send data (bytes per second)")
 	useSibra = flag.Bool("sibra", true, "Use sibra paths")
 	paceFile = flag.String("pf", "", "File containing packet sizes and timings for reproducing existing flow")
+	repeatFlowFile = flag.Uint("repeat", 1, "Number of times to repeat the flow file data")
 
 	fileData []byte
 )
@@ -244,9 +245,11 @@ func (c *client) run() {
 	var testId uint64
 	var packetNumber uint64
 	if packetTimings != nil {
-		packetNumber=uint64(len(packetTimings))
+		packetNumber=uint64(len(packetTimings)) * uint64(*repeatFlowFile)
 		testId = c.registerNewTest(uint64(packetNumber), testDuration, maxPacketLength, rcvChannel)
-		droppedPacktes = c.sendDataFromFile(packetTimings, testId, testDuration, maxPacketLength)
+		for i:=0; i<int(*repeatFlowFile); i++{
+			droppedPacktes = c.sendDataFromFile(packetTimings, testId, testDuration, maxPacketLength)
+		}
 	} else {
 		var pace time.Duration
 		packetNumber, pace = calculatePacketCount(*bandwidth, *duration, *mtu)
