@@ -178,8 +178,14 @@ func LogFatal(msg string, a ...interface{}) {
 
 func initNetwork() {
 	// Initialize default SCION networking context
-	if err := snet.Init(local.IA, *sciond, *dispatcher); err != nil {
-		LogFatal("Unable to initialize SCION network", "err", err)
+	// FIX: Sometimes init fails, so we try to do it 5 times
+	for initAtempts:=5;initAtempts>=0; initAtempts--{
+		if err := snet.Init(local.IA, *sciond, *dispatcher); err != nil {
+			LogFatal("Unable to initialize SCION network", "err", err)
+			time.Sleep(time.Millisecond*100)
+			continue
+		}
+		break
 	}
 	log.Debug("SCION network successfully initialized")
 }
@@ -490,7 +496,6 @@ func (c client) read(receivedPackets chan<- common.RawBytes) {
 			log.Error("Reading packets", "Error", err)
 		}
 	}
-
 }
 
 func ReceiveMessage(receivedPackets <-chan common.RawBytes, messageType uint64) common.RawBytes{
