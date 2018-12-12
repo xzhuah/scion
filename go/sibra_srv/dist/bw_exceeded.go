@@ -18,8 +18,6 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/sibra_mgmt"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/log"
-	"github.com/scionproto/scion/go/sibra_srv/conf"
-	"time"
 )
 
 var _ infra.Handler = (*BWExceededReqHandler)(nil)
@@ -27,8 +25,8 @@ var _ infra.Handler = (*BWExceededReqHandler)(nil)
 type BWExceededReqHandler struct{}
 
 func (h *BWExceededReqHandler) Handle(r *infra.Request) {
-	conf:=conf.Get()
+	//conf:=conf.Get()
 	pld := r.Message.(*sibra_mgmt.BandwidthExceeded)
 	log.Debug("Blacklisted flow", "sibra_id", pld.Id)
-	conf.SibraAlgo.Blacklist(pld.RawOriginIA.IA(),time.Duration(1*time.Hour))
+	//conf.SibraAlgo.Blacklist(pld.RawOriginIA.IA(),time.Duration(1*time.Hour))
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/scionproto/scion/go/lib/sibra/flowmonitor"
 	"github.com/scionproto/scion/go/proto"
 	"hash"
+	"net"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -136,6 +137,12 @@ func (s *rSibraExtn) RouteSibraData() (HookResult, error) {
 
 func (s *rSibraExtn) VerifyLocalFlowBW() (HookResult, error) {
 	s.rp.SrcIA()
+	s.rp.SrcHost()
+
+	//TODO: Remove this par. Only used for testing!
+	if s.rp.srcHost.IP().Equal(net.ParseIP("127.0.12.42")){
+		return HookContinue, nil
+	}
 
 	flowInfo :=flowmonitor.FlowInfo{
 		BwCls:s.Info().BwCls,
