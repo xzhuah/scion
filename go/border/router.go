@@ -74,7 +74,7 @@ func NewRouter(id, confDir string) (*Router, error) {
 		Id: id,
 		confDir: confDir,
 		localFlowMonitor:flowmonitor.NewStetefulMonitor(400*time.Millisecond),
-		transitFlowMonitor:flowmonitor.NewStatelessFlowMonitor(100*time.Millisecond),
+		transitFlowMonitor:flowmonitor.NewStatelessFlowMonitor(80*time.Millisecond),
 	}
 	if err := r.setup(); err != nil {
 		return nil, err
