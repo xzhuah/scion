@@ -13,7 +13,7 @@ import (
 const (
 	MINOR_CYCLES_IN_MAJOR_CYCLE int = 64
 	MINOR_CYCLE_COUNTERS int = 64
-	FLOW_SAMPLES_PER_MAJOR_CYCLE = 100
+	FLOW_SAMPLES_PER_MAJOR_CYCLE = 10000
 	DISTRIBUTION_RATE float64 = 1.0 / FLOW_SAMPLES_PER_MAJOR_CYCLE
 	AGING_FACTOR = 0.8
 	MAX_AGE = 6
@@ -105,7 +105,7 @@ func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) FlowMonitoring
 	if perFlowResult := fm.perFlowMonitoring.IsFlowRateExceeded(info, false); perFlowResult == BANDWIDTH_OK {
 		return BANDWIDTH_OK
 	}else if perFlowResult==BANDWIDTH_EXCEEDED {
-		log.Debug("Wooohoo, detected overuse flow!")
+		log.Debug("Detected overuse flow, blacklisting it!")
 		fm.blacklist.AddFlow(flowId)
 		fm.perFlowMonitoring.ClearFlow(info.ReservationId)
 		return BANDWIDTH_BLACKLIST
@@ -151,7 +151,6 @@ func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) FlowMonitoring
 
 	if now.After(fm.nextSamplePeriod) && fm.sampledFlowsLength[bufferIndex] < FLOW_SAMPLES_PER_MAJOR_CYCLE {
 		fm.sampledFlows[bufferIndex][fm.sampledFlowsLength[bufferIndex]]=flowId
-		//copy(fm.sampledFlows[bufferIndex][fm.sampledFlowsLength[bufferIndex]][:], info.ReservationId[:sibra.EphemIDLen])
 		fm.sampledFlowsLength[bufferIndex]++
 		fm.nextSamplePeriod = fm.nextSamplePeriod.Add(time.Duration(rand.ExpFloat64()/DISTRIBUTION_RATE)*time.Millisecond)
 	}
@@ -187,14 +186,13 @@ func (sf SuspiciousFlows) Swap(i, j int) {
 
 func (fm *StatelessFlowMonitor)slowPath(){
 	log.Debug("Starting slow path processing...")
+
 	for processCommand := range fm.slowPathCommands {
 		bufferIndex := processCommand.bufferIndex
 		sampledFlowsCount := fm.sampledFlowsLength[bufferIndex]
 
-		//log.Debug("Active flows:")
 		activeFlows := make(map[EphemeralId] flowUsage)
 		for i:=0; i<sampledFlowsCount; i++{
-			//log.Debug("  ", "flow_id", fm.sampledFlows[bufferIndex][i].Hash())
 			activeFlows[fm.sampledFlows[bufferIndex][i]] = flowUsage{
 				data:0,
 				countedFlows:0,
@@ -283,7 +281,6 @@ func (fm *StatelessFlowMonitor)slowPath(){
 		}
 
 		// Clear all the bucket values so they can be used in the next major cycle
-
 		fm.sampledFlowsLength[bufferIndex]=0
 		for i:=0; i<MINOR_CYCLES_IN_MAJOR_CYCLE; i++{
 			fm.minorCycles[bufferIndex][i].clearCounters()
