@@ -790,6 +790,7 @@ func (c *client) choosePathWithSibra(interactive bool, cls sibra.BwCls) (*sd.Pat
 		LogFatal("Error reserving ephemeral reservation", "err", err)
 	}
 	fmt.Printf("Using path:\n  %s\n", paths[pathIdx].Entry.Path.String())
+	fmt.Printf("Sibra reserved bandwidth %s ", cls.Bps())
 	return paths[pathIdx].Entry, ws
 }
 
