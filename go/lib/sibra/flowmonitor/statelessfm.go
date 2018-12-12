@@ -14,7 +14,6 @@ const (
 	MINOR_CYCLES_IN_MAJOR_CYCLE int = 64
 	MINOR_CYCLE_COUNTERS int = 64
 	FLOW_SAMPLES_PER_MAJOR_CYCLE = 100000
-	DISTRIBUTION_RATE float64 = 1.0 / FLOW_SAMPLES_PER_MAJOR_CYCLE
 	AGING_FACTOR = 0.8
 	MAX_AGE = 6
 
@@ -73,6 +72,9 @@ type StatelessFlowMonitor struct {
 
 	// Used for detailed monitoring of suspicious flows
 	perFlowMonitoring *StatefulFlowMonitor
+
+	// Used to generate exponential distribution
+	lambda float64
 }
 
 func NewStatelessFlowMonitor(minCycleTime time.Duration) *StatelessFlowMonitor {
@@ -87,6 +89,9 @@ func NewStatelessFlowMonitor(minCycleTime time.Duration) *StatelessFlowMonitor {
 		blacklist:NewBlacklist(),
 		perFlowMonitoring:NewStetefulMonitor(500*time.Millisecond),
 	}
+
+	meanTime := res.majorCycleTime/FLOW_SAMPLES_PER_MAJOR_CYCLE
+	res.lambda=1.0/float64(meanTime)
 
 	go res.slowPath()
 
@@ -152,7 +157,7 @@ func (fm *StatelessFlowMonitor)IsFlowRateExceeded(info *FlowInfo) FlowMonitoring
 	if now.After(fm.nextSamplePeriod) && fm.sampledFlowsLength[bufferIndex] < FLOW_SAMPLES_PER_MAJOR_CYCLE {
 		fm.sampledFlows[bufferIndex][fm.sampledFlowsLength[bufferIndex]]=flowId
 		fm.sampledFlowsLength[bufferIndex]++
-		fm.nextSamplePeriod = fm.nextSamplePeriod.Add(time.Duration(rand.ExpFloat64()/DISTRIBUTION_RATE)*time.Millisecond)
+		fm.nextSamplePeriod = fm.nextSamplePeriod.Add(time.Duration(rand.ExpFloat64()/fm.lambda))
 	}
 
 	return BANDWIDTH_OK
