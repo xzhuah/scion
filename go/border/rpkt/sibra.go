@@ -210,6 +210,12 @@ func (s *rSibraExtn) forwardFromExternal() (HookResult, error) {
 		}
 		s.rp.Egress = append(s.rp.Egress, EgressPair{s.rp.Ctx.LocSockOut, dst})
 	}
+
+	if !s.BestEffort{
+		metrics.COLIBRIEphTrafficIn.With(
+			prometheus.Labels{"direction": "external"}).Add(float64(s.Len()))
+	}
+
 	return s.egress()
 }
 
@@ -230,6 +236,12 @@ func (s *rSibraExtn) forwardFromLocal() (HookResult, error) {
 		return HookError, nil
 	}
 	s.rp.Egress = append(s.rp.Egress, EgressPair{s.rp.Ctx.ExtSockOut[*s.rp.ifCurr], nil})
+
+	if !s.BestEffort {
+		metrics.COLIBRIEphTrafficIn.With(
+			prometheus.Labels{"direction": "local"}).Add(float64(s.Len()))
+	}
+
 	return s.egress()
 }
 
@@ -242,6 +254,7 @@ func (s *rSibraExtn) egress() (HookResult, error) {
 		if inSock == "" {
 			inSock = "self"
 		}
+
 		metrics.ProcessSockSrcDst.With(
 			prometheus.Labels{"inSock": inSock, "outSock": epair.S.Labels["sock"]}).Inc()
 	}

@@ -134,7 +134,7 @@ func Init(elem string) {
 
 	// COLIBRI related metrics
 	COLIBRIEphTrafficIn = newCVec("colibri_total_eph_bytes_in",
-		"Total number of COLIBRI ephemeral path bytes sent.", sockLabels)
+		"Total number of COLIBRI ephemeral traffic comming from direction", []string{"direction"})
 
 	// Initialize ringbuf metrics.
 	ringbuf.InitMetrics("border", constLabels, []string{"ringId"})
