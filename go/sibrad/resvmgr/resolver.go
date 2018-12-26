@@ -119,6 +119,7 @@ func (r *resolver) handle() (bool, error) {
 		case ephemExists:
 			ext := entry.syncResv.Load().Ephemeral
 			if ext == nil || ext.Expiry().Before(time.Now()) {
+				//TODO: We should also cancel old reservation over here
 				log.Info("Setting up ephemeral cuz it expired")
 				return r.setupEphem(entry, path, localSvcSB)
 			} else if r.needRenewal(ext, entry) {

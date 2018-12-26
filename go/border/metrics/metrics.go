@@ -61,6 +61,9 @@ var (
 
 	// Misc
 	IFState *prometheus.GaugeVec
+
+	// COLIBRI related metrics
+	COLIBRIEphTrafficIn *prometheus.CounterVec
 )
 
 // Ensure all metrics are registered.
@@ -128,6 +131,10 @@ func Init(elem string) {
 	BRLabels := newG("base_labels", "Border base labels.")
 	BRLabels.Set(1)
 	IFState = newGVec("interface_active", "Interface is active.", sockLabels)
+
+	// COLIBRI related metrics
+	COLIBRIEphTrafficIn = newCVec("colibri_total_eph_bytes_in",
+		"Total number of COLIBRI ephemeral path bytes sent.", sockLabels)
 
 	// Initialize ringbuf metrics.
 	ringbuf.InitMetrics("border", constLabels, []string{"ringId"})

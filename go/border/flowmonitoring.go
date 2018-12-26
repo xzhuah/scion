@@ -22,7 +22,7 @@ import (
 )
 
 // Used to verify if flow is exceeding reserved bandwidth
-// Returns true if flow has exceeded bandwidht and packet should be dropped
+// Returns true if flow has exceeded bandwidth and packet should be dropped
 func (r *Router) FlowMonitoringCallback(info flowmonitor.FlowInfo, isLocalFlow bool) bool {
 	var result flowmonitor.FlowMonitoringResult = flowmonitor.BANDWIDTH_OK
 	if isLocalFlow {
@@ -32,7 +32,7 @@ func (r *Router) FlowMonitoringCallback(info flowmonitor.FlowInfo, isLocalFlow b
 	}
 
 	if result==flowmonitor.BANDWIDTH_BLACKLIST {
-		log.Debug("Blacklisting flow", "sibra_id", info.ReservationId)
+		log.Info("Blacklisting flow", "sibra_id", info.ReservationId)
 		r.SIBRACallback(rpkt.SIBRAInternalPacket{
 			Payload:&sibra_mgmt.BandwidthExceeded{
 				Id:info.ReservationId,

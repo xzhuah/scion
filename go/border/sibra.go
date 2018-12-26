@@ -52,16 +52,6 @@ func (r *Router) SIBRAFwd() {
 	}
 }
 
-//func (r *Router) fwdExternalSIBRARequest(rp *rpkt.RtrPkt) error {
-//	log.Debug("Sending message to SIBRA srv")
-//	if testRes := r.fwdSibraRequest(&sibra_mgmt.BandwidthExceeded{}); testRes==nil{
-//		log.Debug("Successfully sent a message to sibra_srv")
-//	}else{
-//		log.Debug("There was an error sending message to sibra_srv", "error", testRes)
-//	}
-//	return r.fwdSibraRequest(&sibra_mgmt.ExternalPkt{RawPkt: rp.Raw})
-//}
-
 func (r *Router) fwdSibraRequest(cerealizable proto.Cerealizable) error {
 	ctx := rctx.Get()
 	// Pick first local address from topology as source.
