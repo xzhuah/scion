@@ -15,6 +15,8 @@
 package state
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/scionproto/scion/go/sibra_srv/metrics"
 	"sync"
 	"time"
 
@@ -233,6 +235,8 @@ func (e *SteadyResvEntry) PromoteToActive(idx sibra.Index, info *sbresv.Info) er
 	} else {
 		e.EphemeralBW = &BWProvider{
 			Total: ephemBw,
+			usage:metrics.EphBandwidthRsrvd.With(
+				prometheus.Labels{"steadyRes": e.Id.String()}),
 			deallocRing: deallocRing{
 				currTick: sibra.CurrentTick(),
 				freeRing: make([]uint64, sibra.MaxEphemTicks*2),
@@ -315,6 +319,10 @@ func (e *SteadyResvEntry) NonVoidIdxs(now time.Time) int {
 		}
 	}
 	return c
+}
+
+func (e *SteadyResvEntry) CleanupEphemeralUsage(){
+	e.EphemeralBW.CleanUp()
 }
 
 // SteadyResvIdx holds information about a specific reservation index.

@@ -15,6 +15,7 @@
 package state
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
 
@@ -30,6 +31,8 @@ type BWProvider struct {
 	Reserved uint64
 	// deallocRing is used to deallocate expired bandwidth
 	deallocRing deallocRing
+	// Steady reservation reference. Used for usage monitoring
+	usage	prometheus.Gauge
 }
 
 func (b *BWProvider) SetTotal(total uint64) error {
@@ -66,6 +69,7 @@ func (b *BWProvider) AllocExpiring(bw uint64, expTick sibra.Tick) (uint64, bool,
 		b.Reserved -= bw
 		return 0, false, err
 	}
+	b.usage.Add(float64(bw))
 	return bw, true, nil
 }
 
@@ -91,6 +95,7 @@ func (b *BWProvider) ExchangeExpiring(newBw, oldBw uint64, newTick, oldTick sibr
 		b.Reserved -= additional
 		return 0, false, err
 	}
+	b.usage.Add(float64(additional))
 	return allocated, true, nil
 }
 
@@ -153,6 +158,7 @@ func (b *BWProvider) dealloc(bw uint64) error {
 			"max", b.Reserved, "actual", bw)
 	}
 	b.Reserved -= bw
+	b.usage.Sub(float64(bw))
 	return nil
 }
 
@@ -166,7 +172,9 @@ func (b *BWProvider) cleanUp(t time.Time) {
 	if b.deallocRing.freeRing == nil {
 		return
 	}
-	b.Reserved -= b.deallocRing.cleanUp(sibra.TimeToTick(t))
+	freedBandwidth := b.deallocRing.cleanUp(sibra.TimeToTick(t))
+	b.Reserved -=freedBandwidth
+	b.usage.Sub(float64(freedBandwidth))
 }
 
 type deallocRing struct {

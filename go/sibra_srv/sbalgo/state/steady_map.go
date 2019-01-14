@@ -166,6 +166,14 @@ func (m *steadyResvMap) DeleteExpired() {
 	}
 }
 
+func (m *steadyResvMap) CleanupEphemeralUsage() {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, v := range m.resvs {
+		v.CleanupEphemeralUsage()
+	}
+}
+
 func (m *steadyResvMap) OnEvicted(f func(*SteadyResvEntry)) {
 	m.mu.Lock()
 	m.onEvicted = f
@@ -192,6 +200,7 @@ func (j *steadyJanitor) Run(m *steadyResvMap) {
 		case <-ticker.C:
 			m.CollectBandwidth()
 			m.DeleteExpired()
+			m.CleanupEphemeralUsage()
 		case <-j.stop:
 			ticker.Stop()
 			return
