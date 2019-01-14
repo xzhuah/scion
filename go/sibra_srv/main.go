@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"github.com/scionproto/scion/go/sibra_srv/metrics"
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
@@ -42,7 +43,6 @@ var (
 	confDir  = flag.String("confd", "", "Configuration directory (Required)")
 	cacheDir = flag.String("cached", "gen-cache", "Caching directory")
 	stateDir = flag.String("stated", "", "State directory (Defaults to confd)")
-	prom     = flag.String("prom", "127.0.0.1:1283", "Address to export prometheus metrics on")
 	sighup   chan os.Signal
 )
 
@@ -79,6 +79,11 @@ func main() {
 	if err = setup(); err != nil {
 		fatal("Setup failed", "err", err.Error())
 	}
+	// Export prometheus metrics.
+	if err = metrics.Start(); err != nil {
+		fatal("Unable to export metrics", "err", err.Error())
+	}
+
 	var wait chan struct{}
 	<-wait
 }

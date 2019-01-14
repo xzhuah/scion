@@ -871,12 +871,14 @@ class PrometheusGenerator(object):
         "BeaconService": "bs.yml",
         "CertificateService": "cs.yml",
         "PathService": "ps.yml",
+        "SibraService": "cb.yml",
     }
     JOB_NAMES = {
         "BorderRouters": "BR",
         "BeaconService": "BS",
         "CertificateService": "CS",
         "PathService": "PS",
+        "SibraService":"CB",
     }
 
     def __init__(self, out_dir, topo_dicts):
@@ -889,7 +891,7 @@ class PrometheusGenerator(object):
             ele_dict = defaultdict(list)
             for br_id, br_ele in as_topo["BorderRouters"].items():
                 ele_dict["BorderRouters"].append(_prom_addr_br(br_ele))
-            for svc_type in ["BeaconService", "PathService", "CertificateService"]:
+            for svc_type in ["BeaconService", "PathService", "CertificateService", "SibraService"]:
                 for elem_id, elem in as_topo[svc_type].items():
                     ele_dict[svc_type].append(_prom_addr_infra(elem))
             config_dict[topo_id] = ele_dict

@@ -15,6 +15,7 @@
 package main
 
 import (
+	"github.com/scionproto/scion/go/sibra_srv/metrics"
 	"time"
 
 	log "github.com/inconshreveable/log15"
@@ -57,6 +58,8 @@ func setup() error {
 }
 
 func setupNewConf(config *conf.Conf) error {
+	metrics.Init(*id)
+
 	var err error
 	config.Conn, err = registerReliableConn(config)
 	if err != nil {
@@ -128,7 +131,7 @@ func initSNET(ia addr.IA, attempts int, sleep time.Duration) (err error) {
 		if err = snet.Init(ia, *sciondPath, *dispPath); err == nil {
 			break
 		}
-		log.Error("Unable to initialize snet", "retry interval", sleep, "err", err)
+		log.Warn("Unable to initialize snet", "retry interval", sleep, "err", err)
 		time.Sleep(sleep)
 	}
 	return err
