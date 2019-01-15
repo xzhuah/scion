@@ -324,6 +324,7 @@ func (s *AlgoFast) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 			SibraAlgo:    s,
 			EphemResvMap: s.SourceMap[p.Src].ephemMap,
 			Cache:        true,
+			LocalRes: 	  p.Local,
 		}
 		// We do not have to worry about garbage collection of the entry
 		// since we hold the lock over the steady map.

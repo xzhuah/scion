@@ -66,6 +66,8 @@ type SteadyResvEntry struct {
 	ActiveIndex sibra.Index
 	// Cache indicates if the Allocated and LastMax are cached.
 	Cache bool
+	// Indicates if the reservation originates at this AS
+	LocalRes bool
 }
 
 // NeedsCleanUp indicates if a cleanup is necessary and bandwidth can be returned.
@@ -235,12 +237,15 @@ func (e *SteadyResvEntry) PromoteToActive(idx sibra.Index, info *sbresv.Info) er
 	} else {
 		e.EphemeralBW = &BWProvider{
 			Total: ephemBw,
-			usage:metrics.EphBandwidthRsrvd.With(
-				prometheus.Labels{"steadyRes": e.Id.String()}),
 			deallocRing: deallocRing{
 				currTick: sibra.CurrentTick(),
 				freeRing: make([]uint64, sibra.MaxEphemTicks*2),
 			},
+		}
+		// If this is a local reservation, we want to monitor its uage
+		if e.LocalRes {
+			e.EphemeralBW.usage=metrics.EphBandwidthRsrvd.With(
+				prometheus.Labels{"steadyRes": e.Id.String()})
 		}
 	}
 	// Remove invalidated indexes.

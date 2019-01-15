@@ -118,6 +118,10 @@ func AdmitSteadyResv(pkt *conf.ExtPkt, r *sbreq.SteadyReq) error {
 		Src:      pkt.Spkt.SrcIA,
 		Accepted: pkt.Pld.Accepted,
 	}
+	config := conf.Get()
+	if pkt.Spkt.SrcIA.Eq(config.Topo.ISD_AS){
+		params.Local=true
+	}
 	res, err := pkt.Conf.SibraAlgo.AdmitSteady(params)
 	if err != nil {
 		return err

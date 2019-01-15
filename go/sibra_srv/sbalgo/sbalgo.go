@@ -51,6 +51,7 @@ type AdmParams struct {
 	Req      *sbreq.SteadyReq
 	Src      addr.IA
 	Accepted bool
+	Local 	 bool
 }
 
 type CleanParams struct {

@@ -264,6 +264,7 @@ func (s *AlgoSlow) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 			Ifids:        p.Ifids,
 			SibraAlgo:    s,
 			EphemResvMap: state.NewEpehmResvMap(),
+			LocalRes: 	  p.Local,
 		}
 		// We do not have to worry about garbage collection of the entry
 		// since we hold the lock over the steady map.
