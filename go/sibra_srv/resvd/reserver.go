@@ -15,6 +15,7 @@
 package resvd
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
 
@@ -59,6 +60,8 @@ type Reserver struct {
 	notifyReg chan NotifyReg
 	stop      chan struct{}
 	stopped   bool
+	// Used for updating current steady reservation
+	usage	   prometheus.Gauge
 }
 
 func (r *Reserver) Run() {
@@ -157,7 +160,7 @@ func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry, res 
 		failed := loc != nil && loc.State == sibra.StatePending && idx.State == sibra.StateActive
 		// Activate initial index and failed attempts
 		if idx.State == sibra.StatePending || failed {
-			r.activateIdx(config, e.ActiveIndex)
+			r.activateIdx(config, e.ActiveIndex, sibra.BwCls(0))
 			return true
 		}
 	}
@@ -183,11 +186,11 @@ func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry, res 
 			j = i
 		}
 	}
-	r.activateIdx(config, pending[j].Info.Index)
+	r.activateIdx(config, pending[j].Info.Index, idx.Info.BwCls)
 	return true
 }
 
-func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index) {
+func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index, fromBw sibra.BwCls) {
 	r.Debug("Starting to activate index", "idx", idx)
 	e := config.LocalResvs.Get(r.resvID, idx)
 
@@ -221,6 +224,9 @@ func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index) {
 					r.Debug("Unable to insert", "err", err)
 					return
 				}
+				prevBw := fromBw.Bps()
+				currBw := meta.Block.Info.BwCls.Bps()
+				r.usage.Add(float64(currBw-prevBw))
 			},
 		},
 		state: sibra.StateActive,

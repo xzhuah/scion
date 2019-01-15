@@ -17,6 +17,8 @@ package resvd
 import (
 	"bufio"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/scionproto/scion/go/sibra_srv/metrics"
 	"sort"
 	"sync"
 	"time"
@@ -39,12 +41,15 @@ type ResvMaster struct {
 func (r *ResvMaster) Run() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	for key := range conf.Get().Reservations {
+	for key, res := range conf.Get().Reservations {
 		if reqstr, ok := r.ResvHandls[key]; !ok || reqstr.Closed() {
 			reqstr = &Reserver{
 				Logger:  log.New("resvKey", key),
 				stop:    make(chan struct{}),
 				resvKey: key,
+				usage:   metrics.SteadyPathsBandwidth.With(
+					prometheus.Labels{"dstAs": res.IA.String(),
+					"type":  res.PathType.String()}),
 			}
 			r.ResvHandls[key] = reqstr
 			go reqstr.Run()

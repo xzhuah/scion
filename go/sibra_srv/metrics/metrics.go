@@ -52,7 +52,7 @@ func Init(elem string) {
 
 	SteadyPathsBandwidth = newGVec(
 		"steady_path_bandwidth",
-		"Total amount of steady path bandwidth between ASes", []string{"dstAs"})
+		"Total amount of steady path bandwidth between ASes", []string{"dstAs", "type"})
 
 	EphBandwidthRsrvd = newGVec(
 		"eph_path_bandwidth_res",
