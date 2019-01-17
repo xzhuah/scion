@@ -51,3 +51,4 @@ sudo
 tzdata
 uthash-dev
 vim-common
+zookeeperd
