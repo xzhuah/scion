@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/scionproto/scion/go/sibra_srv/metrics"
+	"github.com/scionproto/scion/go/sibra_srv/resvd/controller"
 	"sort"
 	"sync"
 	"time"
@@ -36,11 +37,17 @@ type ResvMaster struct {
 	mu         sync.RWMutex
 	ResvHandls map[string]*Reserver
 	Notify     map[string]chan *conf.ExtPkt
+	Controller controller.ReservationController
 }
 
 func (r *ResvMaster) Run() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	r.Controller = &controller.BasicResController{
+	}
+	r.Controller.Start()
+
 	for key, res := range conf.Get().Reservations {
 		if reqstr, ok := r.ResvHandls[key]; !ok || reqstr.Closed() {
 			reqstr = &Reserver{

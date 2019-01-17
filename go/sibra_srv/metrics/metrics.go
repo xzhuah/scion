@@ -29,8 +29,13 @@ import (
 	"github.com/scionproto/scion/go/lib/prom"
 )
 
-const namespace = "colibri_srv"
-var prometheusAddr = flag.String("prom", "127.0.0.1:1283", "Address to export prometheus metrics on")
+const (
+	NAMESPACE = "colibri_srv"
+	EPHEMERAL_RES_USAGE = "eph_path_bandwidth_res"
+	STEADY_RES_USAGE = "steady_path_bandwidth"
+)
+
+var PrometheusAddr = flag.String("prom", "127.0.0.1:1283", "Address to export prometheus metrics on")
 
 var (
 	// Represents cumulative bandwidth for steady paths created to certain destination AS
@@ -45,33 +50,32 @@ func Init(elem string) {
 	constLabels := prometheus.Labels{"elem": elem}
 
 	newGVec := func(name, help string, lNames []string) *prometheus.GaugeVec {
-		v := prom.NewGaugeVec(namespace, "", name, help, constLabels, lNames)
+		v := prom.NewGaugeVec(NAMESPACE, "", name, help, constLabels, lNames)
 		prometheus.MustRegister(v)
 		return v
 	}
 
 	SteadyPathsBandwidth = newGVec(
-		"steady_path_bandwidth",
+		STEADY_RES_USAGE,
 		"Total amount of steady path bandwidth between ASes", []string{"dstAs", "type"})
 
 	EphBandwidthRsrvd = newGVec(
-		"eph_path_bandwidth_res",
+		EPHEMERAL_RES_USAGE,
 		"Total reserved bandwidth between given ASes", []string{"steadyRes"})
 
 	// Initialize ringbuf metrics.
-	ringbuf.InitMetrics(namespace, constLabels, []string{"ringId"})
+	ringbuf.InitMetrics(NAMESPACE, constLabels, []string{"ringId"})
 
 	http.Handle("/metrics", promhttp.Handler())
 }
 
 // Start handles exposing prometheus metrics.
 func Start() error {
-	log.Debug("Starting metrics..",)
-	ln, err := net.Listen("tcp", *prometheusAddr)
+	ln, err := net.Listen("tcp", *PrometheusAddr)
 	if err != nil {
 		return common.NewBasicError("Unable to bind prometheus metrics port", err)
 	}
-	log.Info("Exporting prometheus metrics", "addr", *prometheusAddr)
+	log.Info("Exporting prometheus metrics", "addr", *PrometheusAddr)
 	go http.Serve(ln, nil)
 	return nil
 }
