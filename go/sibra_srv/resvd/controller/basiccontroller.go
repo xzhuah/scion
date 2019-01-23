@@ -1,8 +1,8 @@
 package controller
 
 import (
+	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/sibra"
-	"github.com/scionproto/scion/go/lib/sibra/sbreq"
 	"github.com/scionproto/scion/go/lib/sibra/sbresv"
 	"github.com/scionproto/scion/go/sibra_srv/conf"
 	"github.com/scionproto/scion/go/sibra_srv/sbalgo/state"
@@ -10,6 +10,9 @@ import (
 /*
 	This controller implements decisions for establishing and maintaining
 	steady reservations between two ASes.
+	It doesn't impose any complex logic, but rather tries to maintain
+	reservation bandwidht as close as possible to desired value from
+	config.
  */
 type BasicResController struct {
 	reservation *conf.Resv
@@ -41,11 +44,8 @@ func (c *BasicResController)RenewReservation(config *conf.Conf) ReservationDetai
 	}
 }
 
-func (c *BasicResController)ReservationConfirmed(resBlock *sbresv.Block, confirmation *sbreq.ConfirmIndex){
-	// We don't do any analytics over here so we can discard this information
-	//prevBw := fromBw.Bps()
-	//currBw := meta.Block.Info.BwCls.Bps()
-	//r.usage.Add(float64(currBw-prevBw))
+func (c *BasicResController)ReservationConfirmed(resBlock *sbresv.Block){
+	log.Debug("Reservation confirmed")
 }
 
 func (c *BasicResController)ChooseIndex(pendingIndicies []*state.SteadyResvIdx) *state.SteadyResvIdx{

@@ -25,7 +25,6 @@ type ReservationDetails struct {
 type ReservationController interface {
 	SetupReservation(config *conf.Conf) ReservationDetails
 	RenewReservation(config *conf.Conf) ReservationDetails
-
-	ReservationConfirmed(resBlock *sbresv.Block) bool
+	ReservationConfirmed(resBlock *sbresv.Block)
 	ChooseIndex([]*state.SteadyResvIdx) *state.SteadyResvIdx
 }

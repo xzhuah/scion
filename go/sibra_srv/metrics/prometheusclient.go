@@ -44,7 +44,7 @@ const(
 	MAX
 )
 
-var aggregate_functions = map[AggregateFunction]string{
+var aggregate_functions = map[AggregateFunction] string {
 	AVG:"avg",
 	SUM:"sum",
 	MIN:"min",
@@ -90,7 +90,7 @@ func (c *PrometheusClient)GetEphResTimestamps(from time.Time, duration time.Dura
 	}
 
 	if val.Type()!=model.ValMatrix{
-		return nil, common.NewBasicError("Unexpected value type. Epxpecting val type matrix", nil)
+		return nil, common.NewBasicError("Unexpected value type. Expecting val type matrix", nil)
 	}
 	results:=val.(model.Matrix)
 	if len(results)>1{

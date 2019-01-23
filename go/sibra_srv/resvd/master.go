@@ -17,8 +17,7 @@ package resvd
 import (
 	"bufio"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/scionproto/scion/go/sibra_srv/metrics"
+	"github.com/prometheus/client_golang/api"
 	"github.com/scionproto/scion/go/sibra_srv/resvd/controller"
 	"sort"
 	"sync"
@@ -44,17 +43,18 @@ func (r *ResvMaster) Run() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	client, err := api.NewClient(api.Config{Address:"http://localhost:9090"})
+	if err!=nil{
+		log.Warn("Couldn't establishe connection with prometheus server")
+	}
+
 	for key, res := range conf.Get().Reservations {
 		if reqstr, ok := r.ResvHandls[key]; !ok || reqstr.Closed() {
 			reqstr = &Reserver{
 				Logger:  log.New("resvKey", key),
 				stop:    make(chan struct{}),
 				resvKey: key,
-				//TODO: Usage should be merged into appropirate controller
-				usage:   metrics.SteadyPathsBandwidth.With(
-					prometheus.Labels{"dstAs": res.IA.String(),
-					"type":  res.PathType.String()}),
-				controller:controller.NewBasicReservationController(res),
+				controller:controller.NewPredictionController(res, client),
 			}
 			r.ResvHandls[key] = reqstr
 			go reqstr.Run()

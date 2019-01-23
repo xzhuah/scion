@@ -15,7 +15,6 @@
 package resvd
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/scionproto/scion/go/sibra_srv/resvd/controller"
 	"sync"
 	"time"
@@ -61,8 +60,6 @@ type Reserver struct {
 	notifyReg chan NotifyReg
 	stop      chan struct{}
 	stopped   bool
-	// Used for updating current steady reservation
-	usage	   prometheus.Gauge
 	controller controller.ReservationController
 }
 
@@ -162,7 +159,7 @@ func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) bool
 		failed := loc != nil && loc.State == sibra.StatePending && idx.State == sibra.StateActive
 		// Activate initial index and failed attempts
 		if idx.State == sibra.StatePending || failed {
-			r.activateIdx(config, e.ActiveIndex, sibra.BwCls(0))
+			r.activateIdx(config, e.ActiveIndex)
 			return true
 		}
 	}
@@ -179,8 +176,8 @@ func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) bool
 	if len(pending) < 1 {
 		return false
 	}
-	nextInex := r.controller.ChooseIndex(pending)
-	r.activateIdx(config, nextInex.Info.Index)
+	nextIndex := r.controller.ChooseIndex(pending)
+	r.activateIdx(config, nextIndex.Info.Index)
 	return true
 }
 
