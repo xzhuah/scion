@@ -566,7 +566,7 @@ class SibraGenerator(object):
             "IA": str(ia),
             "PathPredicate": "%s#0" % ia,
             "PathType": path_type,
-            "MinSize": 1,
+            "MinSize": 10,
             "DesiredSize": 27,
             "MaxSize": 30,
             "SplitCls": 8,

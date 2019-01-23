@@ -62,6 +62,9 @@ func (c *BasicResController)ChooseIndex(pendingIndicies []*state.SteadyResvIdx) 
 	return pendingIndicies[j]
 }
 
+func (c *BasicResController)SteadyPathIDCreated(id sibra.ID){
+}
+
 func abs(a sibra.Bps) sibra.Bps {
 	if a < 0 {
 		return -a

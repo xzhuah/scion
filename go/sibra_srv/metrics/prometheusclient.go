@@ -20,12 +20,12 @@ type PrometheusClient struct {
 	id 		 string
 }
 
-func NewPrometheusClient(client api.Client, serviceId string)(*PrometheusClient, error){
+func NewPrometheusClient(client api.Client, serviceId string)(*PrometheusClient){
 	cli := &PrometheusClient{
 		api:v1.NewAPI(client),
 		id:serviceId,
 	}
-	return cli, nil
+	return cli
 }
 
 type TimeSeries struct{
@@ -62,7 +62,6 @@ func (c *PrometheusClient)GetAggregateForInterval(f AggregateFunction, when time
 		log.Debug("Error processing", "query_string", queryString)
 		return nil, err
 	}
-	log.Debug("Got results", "type", val.Type(), "val", val.String())
 	results := val.(model.Vector)
 	if (len(results)>0){
 		return &AgregateScalar{
@@ -70,7 +69,7 @@ func (c *PrometheusClient)GetAggregateForInterval(f AggregateFunction, when time
 		}, nil
 	}
 
-	return nil, nil
+	return nil, common.NewBasicError("Unable to retreive results", nil)
 }
 
 func (c *PrometheusClient)GetEphResTimestamps(from time.Time, duration time.Duration, steadyPathId string)(*TimeSeries, error){

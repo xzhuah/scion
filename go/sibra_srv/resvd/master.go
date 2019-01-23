@@ -43,9 +43,10 @@ func (r *ResvMaster) Run() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	//TODO: Remove this hardcoded value
 	client, err := api.NewClient(api.Config{Address:"http://localhost:9090"})
 	if err!=nil{
-		log.Warn("Couldn't establishe connection with prometheus server")
+		log.Warn("Couldn't establish connection with prometheus server")
 	}
 
 	for key, res := range conf.Get().Reservations {
