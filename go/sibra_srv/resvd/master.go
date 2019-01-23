@@ -44,19 +44,17 @@ func (r *ResvMaster) Run() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.Controller = &controller.BasicResController{
-	}
-	r.Controller.Start()
-
 	for key, res := range conf.Get().Reservations {
 		if reqstr, ok := r.ResvHandls[key]; !ok || reqstr.Closed() {
 			reqstr = &Reserver{
 				Logger:  log.New("resvKey", key),
 				stop:    make(chan struct{}),
 				resvKey: key,
+				//TODO: Usage should be merged into appropirate controller
 				usage:   metrics.SteadyPathsBandwidth.With(
 					prometheus.Labels{"dstAs": res.IA.String(),
 					"type":  res.PathType.String()}),
+				controller:controller.NewBasicReservationController(res),
 			}
 			r.ResvHandls[key] = reqstr
 			go reqstr.Run()

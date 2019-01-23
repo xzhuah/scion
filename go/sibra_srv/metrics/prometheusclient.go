@@ -20,11 +20,7 @@ type PrometheusClient struct {
 	id 		 string
 }
 
-func NewPrometheusCli(url, serviceId string)(*PrometheusClient, error){
-	client, err := api.NewClient(api.Config{Address:url})
-	if err!=nil {
-		return nil, err
-	}
+func NewPrometheusClient(client api.Client, serviceId string)(*PrometheusClient, error){
 	cli := &PrometheusClient{
 		api:v1.NewAPI(client),
 		id:serviceId,

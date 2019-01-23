@@ -16,6 +16,7 @@ package resvd
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/scionproto/scion/go/sibra_srv/resvd/controller"
 	"sync"
 	"time"
 
@@ -62,6 +63,7 @@ type Reserver struct {
 	stopped   bool
 	// Used for updating current steady reservation
 	usage	   prometheus.Gauge
+	controller controller.ReservationController
 }
 
 func (r *Reserver) Run() {
@@ -102,19 +104,19 @@ func (r *Reserver) run() error {
 		e, ok = algo.SteadyMap.Get(r.resvID)
 	}
 	if !ok || e.Expired(time.Now()) {
-		r.setupResv(config, res)
+		r.setupResv(config)
 		return nil
 	}
 	if r.isRecent(config, e) {
 		return nil
 	}
-	if r.tempExists(config, e, res) {
+	if r.tempExists(config, e) {
 		return nil
 	}
-	if r.switchIndex(config, e, res) {
+	if r.switchIndex(config, e) {
 		return nil
 	}
-	if err := r.renewResv(config, e, res); err != nil {
+	if err := r.renewResv(config, e); err != nil {
 		r.Error("Unable to renew", "err", err)
 	}
 	return nil
@@ -140,7 +142,7 @@ func (r *Reserver) isRecent(config *conf.Conf, e *state.SteadyResvEntry) bool {
 	return true
 }
 
-func (r *Reserver) tempExists(config *conf.Conf, e *state.SteadyResvEntry, res *conf.Resv) bool {
+func (r *Reserver) tempExists(config *conf.Conf, e *state.SteadyResvEntry) bool {
 	e.RLock()
 	defer e.RUnlock()
 	for _, idx := range e.Indexes {
@@ -151,7 +153,7 @@ func (r *Reserver) tempExists(config *conf.Conf, e *state.SteadyResvEntry, res *
 	return false
 }
 
-func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry, res *conf.Resv) bool {
+func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) bool {
 	e.Lock()
 	defer e.Unlock()
 	idx := e.Indexes[e.ActiveIndex]
@@ -177,20 +179,12 @@ func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry, res 
 	if len(pending) < 1 {
 		return false
 	}
-	minDiff := abs(res.DesiredSize.Bps() - pending[0].Info.BwCls.Bps())
-	j := 0
-	for i, v := range pending {
-		diff := abs(res.DesiredSize.Bps() - v.Info.BwCls.Bps())
-		if diff < minDiff {
-			minDiff = diff
-			j = i
-		}
-	}
-	r.activateIdx(config, pending[j].Info.Index, idx.Info.BwCls)
+	nextInex := r.controller.ChooseIndex(pending)
+	r.activateIdx(config, nextInex.Info.Index)
 	return true
 }
 
-func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index, fromBw sibra.BwCls) {
+func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index) {
 	r.Debug("Starting to activate index", "idx", idx)
 	e := config.LocalResvs.Get(r.resvID, idx)
 
@@ -224,9 +218,7 @@ func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index, fromBw sibra.
 					r.Debug("Unable to insert", "err", err)
 					return
 				}
-				prevBw := fromBw.Bps()
-				currBw := meta.Block.Info.BwCls.Bps()
-				r.usage.Add(float64(currBw-prevBw))
+				r.controller.ReservationConfirmed(meta.Block)
 			},
 		},
 		state: sibra.StateActive,
@@ -234,8 +226,8 @@ func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index, fromBw sibra.
 	go c.Run(c)
 }
 
-func (r *Reserver) setupResv(config *conf.Conf, res *conf.Resv) {
-	r.Debug("Starting setup request")
+func (r *Reserver) setupResv(config *conf.Conf) {
+	resDetails := r.controller.SetupReservation(config)
 	s := &SteadySetup{
 		ResvReqstr: &ResvReqstr {
 			Reqstr: &Reqstr {
@@ -247,21 +239,22 @@ func (r *Reserver) setupResv(config *conf.Conf, res *conf.Resv) {
 				srcHost: config.PublicAddr.Host,
 				dstHost: addr.SvcSB,
 			},
-			min:   res.MinSize,
-			max:   res.DesiredSize,
-			split: res.SplitCls,
-			props: res.EndProps,
+			min:   resDetails.Min,
+			max:   resDetails.Max,
+			split: resDetails.Split,
+			props: resDetails.Props,
 		},
 		path: r.path,
-		pt:   res.PathType,
+		pt:   resDetails.PathType,
 	}
 	go s.Run(s)
 }
 
-func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *conf.Resv) error {
+func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry) error {
+	resDetails := r.controller.SetupReservation(config)
 	p := &query.Params{
 		ResvID: r.resvID,
-		SegID:  sibra_mgmt.PathToSegID(r.pathToIntfs(r.path, res.PathType)),
+		SegID:  sibra_mgmt.PathToSegID(r.pathToIntfs(r.path, resDetails.PathType)),
 	}
 	results, err := config.ResvDB.Get(p)
 	if err != nil {
@@ -289,10 +282,10 @@ func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *c
 				block:   results[0].BlockMeta.Block,
 				timeout: results[0].BlockMeta.Block.Info.RLC.Duration(),
 			},
-			min:   res.MinSize,
-			max:   res.DesiredSize,
-			split: res.SplitCls,
-			props: res.EndProps,
+			min:   resDetails.Min,
+			max:   resDetails.Max,
+			split: resDetails.Split,
+			props: resDetails.Props,
 		},
 	}
 	go s.Run(s)
@@ -403,9 +396,3 @@ func (r *Reserver) Closed() bool {
 	return r.stopped
 }
 
-func abs(a sibra.Bps) sibra.Bps {
-	if a < 0 {
-		return -a
-	}
-	return a
-}
