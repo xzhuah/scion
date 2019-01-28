@@ -56,6 +56,10 @@ func (e *ephem) setup(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes, err
 		return sbalgo.EphemRes{FailCode: fc}, nil
 	}
 	if !p.Accepted {
+		res := e.checkBw(stEntry, info)
+
+		stEntry.ReportMissingBW(info.BwCls.Bps(), res.MaxBw.Bps())
+
 		return e.checkBw(stEntry, info), nil
 	}
 	id := p.Data.(*sbreq.EphemReq).ID
@@ -70,6 +74,7 @@ func (e *ephem) setup(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes, err
 	}
 	res, alloc, err := e.allocExpiring(stEntry, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
+		stEntry.ReportMissingBW(info.BwCls.Bps(), alloc)
 		return res, err
 	}
 	if err := e.addEntry(stEntry, id, info, alloc); err != nil {
@@ -95,7 +100,12 @@ func (e *ephem) setupTrans(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes
 	}
 	if !p.Accepted {
 		in := e.checkBw(stIngress, info)
-		if eg := e.checkBw(stEgress, info); eg.MaxBw < in.MaxBw {
+		eg := e.checkBw(stEgress, info)
+		//Report missing bandwidth
+		stIngress.ReportMissingBW(info.BwCls.Bps(), in.MaxBw.Bps())
+		stEgress.ReportMissingBW(info.BwCls.Bps(), eg.MaxBw.Bps())
+
+		if eg.MaxBw < in.MaxBw {
 			return eg, nil
 		}
 		return in, nil
@@ -115,11 +125,15 @@ func (e *ephem) setupTrans(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes
 	}
 	res, allocIngress, err := e.allocExpiring(stIngress, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
+		stIngress.ReportMissingBW(info.BwCls.Bps(), allocIngress)
+		stEgress.ReportMissingBW(info.BwCls.Bps(), e.checkBw(stEgress, info).MaxBw.Bps())
+
 		return res, err
 	}
 	res, allocEgress, err := e.allocExpiring(stEgress, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
 		stIngress.EphemeralBW.DeallocExpiring(uint64(allocIngress), info.ExpTick)
+		stEgress.ReportMissingBW(info.BwCls.Bps(), allocEgress)
 		return res, err
 	}
 	if err := e.addEntry(stIngress, id, info, allocIngress); err != nil {
@@ -178,11 +192,6 @@ func (e *ephem) allocExpiring(steady *state.SteadyResvEntry, info *sbresv.Info) 
 			FailCode: sbreq.BwExceeded,
 		}
 
-		// Missing bandwidth will be recorded
-		if steady.MissingBandwodth!=nil{
-			steady.MissingBandwodth.Add(float64(info.BwCls.Bps()-maxBw.Bps()))
-		}
-
 		return res, 0, nil
 	}
 	res := sbalgo.EphemRes{
@@ -229,8 +238,11 @@ func (e *ephem) renew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, e
 		return sbalgo.EphemRes{FailCode: fc}, nil
 	}
 	if !p.Accepted {
-		return e.checkBw(stEntry, info), nil
+		res := e.checkBw(stEntry, info)
+		stEntry.ReportMissingBW(info.BwCls.Bps(), res.MaxBw.Bps())
+		return res, nil
 	}
+
 	id := ephem.GetCurrID()
 	ephemEntry, ok := stEntry.EphemResvMap.Get(id)
 	if !ok {
@@ -245,11 +257,11 @@ func (e *ephem) renew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, e
 
 	res, alloc, undo, err := e.exchangeExpiring(stEntry, ephemEntry, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
+		stEntry.ReportMissingBW(info.BwCls.Bps(), alloc)
 		return res, err
 	}
 	if err := ephemEntry.AddIdx(info, uint64(alloc)); err != nil {
 		stEntry.EphemeralBW.UndoExchangeExpiring(undo.newBw, undo.oldBw, undo.newTick, undo.oldTick)
-		log.Info("Unable to add index", "info", info, "active", ephemEntry.ActiveIdx, "err", err)
 		return sbalgo.EphemRes{FailCode: sbreq.InvalidInfo}, nil
 	}
 	return res, nil
@@ -272,7 +284,12 @@ func (e *ephem) renewTrans(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemR
 	}
 	if !p.Accepted {
 		in := e.checkBw(stIngress, info)
-		if eg := e.checkBw(stEgress, info); eg.MaxBw < in.MaxBw {
+		eg := e.checkBw(stEgress, info)
+		//Report missing bandwidth
+		stIngress.ReportMissingBW(info.BwCls.Bps(), in.MaxBw.Bps())
+		stEgress.ReportMissingBW(info.BwCls.Bps(), eg.MaxBw.Bps())
+
+		if eg.MaxBw < in.MaxBw {
 			return eg, nil
 		}
 		return in, nil
@@ -287,6 +304,7 @@ func (e *ephem) renewTrans(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemR
 		return sbalgo.EphemRes{FailCode: sbreq.EphemNotExists}, nil
 	}
 
+	log.Debug("Check if eph reservation is already registered")
 	_, registeredIngress := e.isAlreadyRegistered(epIngress, info)
 	res, registeredEgress := e.isAlreadyRegistered(epEgress, info)
 	if registeredIngress && registeredEgress{
@@ -296,12 +314,16 @@ func (e *ephem) renewTrans(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemR
 
 	res, allocIngress, undoIngress, err := e.exchangeExpiring(stIngress, epIngress, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
+		stIngress.ReportMissingBW(info.BwCls.Bps(), allocIngress)
+		stEgress.ReportMissingBW(info.BwCls.Bps(), e.checkBw(stEgress, info).MaxBw.Bps())
+
 		return res, err
 	}
 	res, allocEgress, undoEgress, err := e.exchangeExpiring(stEgress, epEgress, info)
 	if err != nil || res.FailCode != sbreq.FailCodeNone {
 		stIngress.EphemeralBW.UndoExchangeExpiring(undoIngress.newBw,
 			undoIngress.oldBw, undoIngress.newTick, undoIngress.oldTick)
+		stEgress.ReportMissingBW(info.BwCls.Bps(), allocEgress)
 		return res, err
 	}
 	if err := epIngress.AddIdx(info, uint64(allocIngress)); err != nil {
@@ -333,7 +355,7 @@ type undo struct {
 
 func (e *ephem) exchangeExpiring(stEntry *state.SteadyResvEntry,
 	ephemEntry *state.EphemResvEntry, info *sbresv.Info) (sbalgo.EphemRes, sibra.Bps, undo, error) {
-
+	log.Debug("Exchaning expiring...")
 	u := undo{
 		newTick: info.ExpTick,
 		oldTick: ephemEntry.ActiveIdx.Info.ExpTick,
@@ -345,14 +367,16 @@ func (e *ephem) exchangeExpiring(stEntry *state.SteadyResvEntry,
 		// This should not be possible, since the info has been validated.
 		return sbalgo.EphemRes{}, 0, undo{}, err
 	}
+	maxBw:=sibra.Bps(alloc).ToBwCls(true)
+	log.Debug("Exchanging expiring", "ok", ok, "maxBw", maxBw, "requested", info.BwCls)
 	if !ok {
 		res := sbalgo.EphemRes{
-			MaxBw:    sibra.Bps(alloc).ToBwCls(true),
+			MaxBw:    maxBw,
 			FailCode: sbreq.BwExceeded,
 		}
+
 		return res, 0, undo{}, nil
 	}
-	maxBw := sibra.Bps(alloc).ToBwCls(true)
 	res := sbalgo.EphemRes{
 		AllocBw: maxBw,
 		MaxBw:   maxBw,

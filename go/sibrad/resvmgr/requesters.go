@@ -289,6 +289,7 @@ func (s *EphemSetup) HandleRep(event notifyEvent) (bool, error) {
 		s.entry.syncResv.UpdateEphem(ephem)
 		s.entry.ephemMeta.timestamp = time.Now()
 		s.entry.ephemMeta.state = ephemExists
+		s.entry.ephemMeta.lastFailCode = sbreq.FailCodeNone
 	case *sbreq.EphemFailed:
 		s.entry.ephemMeta.lastFailCode = r.FailCode
 		s.entry.ephemMeta.lastMaxBw = r.MinOffer()
@@ -361,6 +362,7 @@ func (r *EphemRenew) HandleRep(event notifyEvent) (bool, error) {
 		r.entry.syncResv.UpdateEphem(ephem)
 		r.entry.ephemMeta.timestamp = time.Now()
 		r.entry.ephemMeta.state = ephemExists
+		r.entry.ephemMeta.lastFailCode = sbreq.FailCodeNone
 	case *sbreq.EphemFailed:
 		r.entry.ephemMeta.lastFailCode = request.FailCode
 		r.entry.ephemMeta.lastMaxBw = request.MinOffer()

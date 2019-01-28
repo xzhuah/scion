@@ -89,8 +89,8 @@ func (c *PredictionController)calculateNextReservationSize(config *conf.Conf) Re
 	}
 
 	// Step 3: Get information on how much bandwidth was reserved
+	//TODO: Read usage from database
 	if c.lastBwClass==0 {
-		//TODO: Read usage from database
 		log.Warn("Don't have information on last BW class")
 		return reservation
 	}

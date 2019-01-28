@@ -113,7 +113,6 @@ func (c *PrometheusClient)GetChangeFrom(metric string, dstAs, pathType string, f
 
 	queryString := fmt.Sprintf("delta(%s_%s{elem=\"%s\",dstAs=\"%s\",type=\"%s\"}[%ds])",NAMESPACE, metric,
 		c.id, dstAs, pathType, int(from.Seconds()))
-	log.Debug("Asking for delta", "qs", queryString)
 	val, err := c.api.Query(ctx, queryString, time.Now())
 	if err!=nil {
 		log.Debug("Error processing", "query_string", queryString)

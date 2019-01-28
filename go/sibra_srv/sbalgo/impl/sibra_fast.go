@@ -19,6 +19,7 @@ import (
 	"github.com/scionproto/scion/go/sibra_srv/metrics"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/assert"
@@ -493,6 +494,7 @@ func (s *AlgoFast) CleanSteadyResv(c sbalgo.CleanParams) {
 	// XXX(roosd): Panic to find possible bugs. Should be removed
 	// before deploying to production.
 	if dem.nextSrcDem < 0 {
+		time.Sleep(3*time.Second)
 		log.Crit("nextSrcDem negative", "nextSrcDem", dem.nextSrcDem)
 		panic("nextSrcDem negative")
 	}

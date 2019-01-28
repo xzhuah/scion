@@ -334,6 +334,16 @@ func (e *SteadyResvEntry) CleanupEphemeralUsage(){
 	}
 }
 
+func (e *SteadyResvEntry) ReportMissingBW(need, has sibra.Bps) {
+	if need<has{
+		return
+	}
+	missing:=need-has
+	if e.MissingBandwodth!=nil {
+		e.MissingBandwodth.Add(float64(missing))
+	}
+}
+
 // SteadyResvIdx holds information about a specific reservation index.
 type SteadyResvIdx struct {
 	Info       sbresv.Info
