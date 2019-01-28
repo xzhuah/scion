@@ -110,7 +110,7 @@ func (c *PredictionController)calculateNextReservationSize(config *conf.Conf) Re
 		reservation.Max=(2*c.lastBwClass.Bps()).ToBwCls(false)
 	}
 
-	reservation.Max=limit(c.reservation.MinSize, c.reservation.MaxSize, sibra.Bps(avgUsage.Value*2).ToBwCls(false))
+	reservation.Max=limit(c.reservation.MinSize, c.reservation.MaxSize, reservation.Max)
 	return reservation
 
 }
