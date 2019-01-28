@@ -158,6 +158,7 @@ func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) bool
 		failed := loc != nil && loc.State == sibra.StatePending && idx.State == sibra.StateActive
 		// Activate initial index and failed attempts
 		if idx.State == sibra.StatePending || failed {
+			log.Debug("Using default activate index...")
 			r.activateIdx(config, e.ActiveIndex)
 			return true
 		}
@@ -176,6 +177,7 @@ func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) bool
 		return false
 	}
 	nextIndex := r.controller.ChooseIndex(pending)
+	log.Debug("Switching index!", "fromBw", idx.Info.BwCls, "toBw", nextIndex.Info.BwCls)
 	r.activateIdx(config, nextIndex.Info.Index)
 	return true
 }
@@ -251,7 +253,7 @@ func (r *Reserver) setupResv(config *conf.Conf, res *conf.Resv) {
 }
 
 func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *conf.Resv) error {
-	resDetails := r.controller.SetupReservation(config)
+	resDetails := r.controller.RenewReservation(config)
 	p := &query.Params{
 		ResvID: r.resvID,
 		SegID:  sibra_mgmt.PathToSegID(r.pathToIntfs(r.path, resDetails.PathType)),

@@ -51,14 +51,15 @@ var aggregate_functions = map[AggregateFunction] string {
 	MAX:"max",
 }
 
-func (c *PrometheusClient)GetAggregateForInterval(f AggregateFunction, metric string, when time.Time,
-	duration time.Duration, steadyPathId string)(*Scalar, error){
+func (c *PrometheusClient)GetAggregateForInterval(f AggregateFunction, metric string,
+	dstAs, pathType string,
+	when time.Time, duration time.Duration)(*Scalar, error){
 
 	ctx, cancelF := context.WithTimeout(context.Background(), REQ_TIMEOUT)
 	defer cancelF()
 
-	queryString := fmt.Sprintf("%s_over_time(%s_%s{elem=\"%s\"}[%ds])",aggregate_functions[f],
-			NAMESPACE, metric, c.id, int(duration.Seconds()))
+	queryString := fmt.Sprintf("%s_over_time(%s_%s{elem=\"%s\",dstAs=\"%s\",type=\"%s\"}[%ds])",aggregate_functions[f],
+			NAMESPACE, metric, c.id, dstAs, pathType, int(duration.Seconds()))
 	val, err := c.api.Query(ctx, queryString, when)
 	if err!=nil {
 		log.Debug("Error processing", "query_string", queryString)
@@ -106,11 +107,12 @@ func (c *PrometheusClient)GetEphResTimestamps(metric string, from time.Time, dur
 	return nil, nil
 }
 
-func (c *PrometheusClient)GetChangeFrom(metric string, from time.Duration)(*Scalar, error){
+func (c *PrometheusClient)GetChangeFrom(metric string, dstAs, pathType string, from time.Duration)(*Scalar, error){
 	ctx, cancelF := context.WithTimeout(context.Background(), REQ_TIMEOUT)
 	defer cancelF()
 
-	queryString := fmt.Sprintf("delta(%s_%s{elem=\"%s\"}[%ds])",NAMESPACE, metric, c.id, int(from.Seconds()))
+	queryString := fmt.Sprintf("delta(%s_%s{elem=\"%s\",dstAs=\"%s\",type=\"%s\"}[%ds])",NAMESPACE, metric,
+		c.id, dstAs, pathType, int(from.Seconds()))
 	log.Debug("Asking for delta", "qs", queryString)
 	val, err := c.api.Query(ctx, queryString, time.Now())
 	if err!=nil {

@@ -45,8 +45,6 @@ func NewPredictionController(res *conf.Resv, resKey string, client api.Client)(*
 }
 
 func (c *PredictionController)ReservationConfirmed(resBlock *sbresv.Block){
-	log.Debug("Reservation confirmed")
-
 	prevBw := c.lastBwClass.Bps()
 	currBw := resBlock.Info.BwCls.Bps()
 	c.usage.Add(float64(currBw-prevBw))
@@ -63,6 +61,7 @@ func (c *PredictionController)RenewReservation(config *conf.Conf) ReservationDet
 	return c.calculateNextReservationSize(config)
 }
 
+// This is an example function that decides how much bandwidth should be allocated to a steady reservation
 func (c *PredictionController)calculateNextReservationSize(config *conf.Conf) ReservationDetails {
 	reservation := ReservationDetails{
 		Min:c.reservation.MinSize,
@@ -72,21 +71,48 @@ func (c *PredictionController)calculateNextReservationSize(config *conf.Conf) Re
 		PathType:c.reservation.PathType,
 	}
 
+	// Step 1: get average usage
 	avgUsage, err := c.promClient.GetAggregateForInterval(metrics.AVG, metrics.EPHEMERAL_RES_USAGE,
-			time.Now().Add(time.Duration(-3)*time.Minute), time.Second*10, c.pathID.String())
+		c.reservation.IA.String(), c.reservation.PathType.String(),
+		time.Now().Add(time.Duration(-1)*time.Minute), time.Second*10)
 	if err!=nil{
 		log.Warn("Unable to query Prometheus database, using default values!", "error", err)
 		return reservation
-	}else{
-		if avgUsage.Value<float64(c.reservation.MinSize.Bps()){
-			log.Debug("There was no usage in the past, using minimum bw")
-			reservation.Max=c.reservation.MinSize
-		}else{
-			log.Debug("There was usage in the past...")
-			reservation.Max=limit(c.reservation.MinSize, c.reservation.MaxSize, sibra.Bps(avgUsage.Value*2).ToBwCls(false))
-		}
+	}
+
+	// Step 2: Get information on how much bandwidth was missing
+	missBw, err := c.promClient.GetChangeFrom(metrics.MISSING_BW, c.reservation.IA.String(),
+		c.reservation.PathType.String(), time.Now().Sub(c.lastConfirmationTime))
+	if err!=nil{
+		log.Warn("Unable to get missing bandwidth for last reservation cycle", "err", err)
 		return reservation
 	}
+
+	// Step 3: Get information on how much bandwidth was reserved
+	if c.lastBwClass==0 {
+		//TODO: Read usage from database
+		log.Warn("Don't have information on last BW class")
+		return reservation
+	}
+
+	utilization := avgUsage.Value/float64(c.lastBwClass.Bps())
+	log.Debug("Calculating new reservation size", "averageUsage", avgUsage.Value, "missingBw", missBw.Value,
+		"currRes", c.lastBwClass.Bps(), "utilization", utilization)
+
+	if utilization<0.4 && missBw.Value<=0 {
+		log.Debug("Utilization of the reservation is low, lowering it")
+		reservation.Max=sibra.Bps(2*utilization*float64(c.lastBwClass.Bps())).ToBwCls(false)
+	}else if missBw.Value<float64(c.lastBwClass.Bps()){
+		log.Debug("Utilization we are missing some bandwidth, increasing")
+		reservation.Max=sibra.Bps(float64(c.lastBwClass.Bps())+missBw.Value).ToBwCls(false)
+	}else{
+		log.Debug("We are missing lot of bandwidth, doubling current reservation")
+		reservation.Max=(2*c.lastBwClass.Bps()).ToBwCls(false)
+	}
+
+	reservation.Max=limit(c.reservation.MinSize, c.reservation.MaxSize, sibra.Bps(avgUsage.Value*2).ToBwCls(false))
+	return reservation
+
 }
 
 func (c *PredictionController)SteadyPathIDCreated(id sibra.ID){
@@ -108,13 +134,22 @@ func (c *PredictionController)ChooseIndex(pendingIndicies []*state.SteadyResvIdx
 }
 
 func (c *PredictionController)ShouldRenew(details ReservationDetails) bool{
-	//missBw, err := c.promClient.GetChangeFrom(metrics.MISSING_BW, time.Now().Sub(c.lastConfirmationTime))
-	//if err!=nil{
-	//	log.Warn("Unable to get missing bandwidth for last reservation", "err", err)
-	//	return false
-	//}
-	//
-	//log.Debug("Missing bandwidth", "curr", missBw.Value)
+	// Don't renew too often
+	if time.Now().Sub(c.lastConfirmationTime)<time.Second*30{
+		return false
+	}
+
+	missBw, err := c.promClient.GetChangeFrom(metrics.MISSING_BW, c.reservation.IA.String(),
+		c.reservation.PathType.String(), time.Now().Sub(c.lastConfirmationTime))
+	if err!=nil{
+		log.Warn("Unable to get missing bandwidth for last reservation cycle", "err", err)
+		return false
+	}
+
+	// If we are missing less than 50% of bandwidht, not so important
+	if missBw.Value>0.5*float64(c.lastBwClass.Bps()){
+		return true
+	}
 
 	return false
 }
