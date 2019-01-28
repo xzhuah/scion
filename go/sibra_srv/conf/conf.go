@@ -229,7 +229,8 @@ func (c *Conf) loadReservations() (err error) {
 }
 
 func (c *Conf) loadSibraState() (err error) {
-	c.SibraAlgo, err = impl.NewSibraFast(c.Topo, c.Matrix)
+	//c.SibraAlgo, err = impl.NewSibraFast(c.Topo, c.Matrix)
+	c.SibraAlgo, err = impl.NewSibraSlow(c.Topo, c.Matrix)
 	return err
 }
 
