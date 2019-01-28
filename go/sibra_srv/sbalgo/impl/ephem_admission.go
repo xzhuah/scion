@@ -177,6 +177,12 @@ func (e *ephem) allocExpiring(steady *state.SteadyResvEntry, info *sbresv.Info) 
 			MaxBw:    maxBw,
 			FailCode: sbreq.BwExceeded,
 		}
+
+		// Missing bandwidth will be recorded
+		if steady.MissingBandwodth!=nil{
+			steady.MissingBandwodth.Add(float64(info.BwCls.Bps()-maxBw.Bps()))
+		}
+
 		return res, 0, nil
 	}
 	res := sbalgo.EphemRes{

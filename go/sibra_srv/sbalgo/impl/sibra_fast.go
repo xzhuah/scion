@@ -16,6 +16,7 @@ package impl
 
 import (
 	"fmt"
+	"github.com/scionproto/scion/go/sibra_srv/metrics"
 	"math"
 	"strings"
 
@@ -311,6 +312,7 @@ func (s *AlgoFast) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 		EndProps: p.Req.EndProps,
 	}
 	stEntry, ok := s.SteadyMap.Get(p.Extn.GetCurrID())
+
 	if !ok {
 		if p.Req.Info.Index != 0 {
 			return common.NewBasicError("Invalid initial index", nil,
@@ -324,7 +326,7 @@ func (s *AlgoFast) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 			SibraAlgo:    s,
 			EphemResvMap: s.SourceMap[p.Src].ephemMap,
 			Cache:        true,
-			LocalRes: 	  p.Local,
+
 		}
 		// We do not have to worry about garbage collection of the entry
 		// since we hold the lock over the steady map.
@@ -332,6 +334,12 @@ func (s *AlgoFast) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 			return err
 		}
 	}
+
+	if p.PromLables!=nil{
+		stEntry.EphUsage=metrics.EphBandwidthRsrvd.With(p.PromLables)
+		stEntry.MissingBandwodth=metrics.MissingBandwidth.With(p.PromLables)
+	}
+
 	if err := stEntry.AddIdx(idx); err != nil {
 		return err
 	}

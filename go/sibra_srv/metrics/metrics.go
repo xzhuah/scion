@@ -33,6 +33,7 @@ const (
 	NAMESPACE = "colibri_srv"
 	EPHEMERAL_RES_USAGE = "eph_path_bandwidth_res"
 	STEADY_RES_USAGE = "steady_path_bandwidth"
+	MISSING_BW = "missing_bw"
 )
 
 var PrometheusAddr = flag.String("prom", "127.0.0.1:1283", "Address to export prometheus metrics on")
@@ -42,6 +43,8 @@ var (
 	SteadyPathsBandwidth	*prometheus.GaugeVec
 	// Represents total bandwidth reserved for eph paths for a given steady path
 	EphBandwidthRsrvd		*prometheus.GaugeVec
+	// Represents total amount of unfulfilled bandwidth reservations, Used to estimate what is need for bandwidth.
+	MissingBandwidth		*prometheus.CounterVec
 )
 
 // Ensure all metrics are registered.
@@ -55,13 +58,23 @@ func Init(elem string) {
 		return v
 	}
 
+	newCVec := func(name, help string, lNames []string) *prometheus.CounterVec {
+		v := prom.NewCounterVec(NAMESPACE, "", name, help, constLabels, lNames)
+		prometheus.MustRegister(v)
+		return v
+	}
+
 	SteadyPathsBandwidth = newGVec(
 		STEADY_RES_USAGE,
-		"Total amount of steady path bandwidth between ASes", []string{"dstAs", "type"})
+		"Total amount of steady path bandwidth between ASes", []string{"dstAs", "type", "resKey"})
 
 	EphBandwidthRsrvd = newGVec(
 		EPHEMERAL_RES_USAGE,
-		"Total reserved bandwidth between given ASes", []string{"steadyRes"})
+		"Total reserved bandwidth between given ASes", []string{"dstAs", "type"})
+
+	MissingBandwidth = newCVec(
+		MISSING_BW,
+		"Total missing bandwidth for reservation", []string{"dstAs", "type"})
 
 	// Initialize ringbuf metrics.
 	ringbuf.InitMetrics(NAMESPACE, constLabels, []string{"ringId"})

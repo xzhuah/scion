@@ -16,7 +16,7 @@ package state
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/scionproto/scion/go/sibra_srv/metrics"
+	"github.com/scionproto/scion/go/lib/assert"
 	"sync"
 	"time"
 
@@ -67,7 +67,8 @@ type SteadyResvEntry struct {
 	// Cache indicates if the Allocated and LastMax are cached.
 	Cache bool
 	// Indicates if the reservation originates at this AS
-	LocalRes bool
+	EphUsage prometheus.Gauge
+	MissingBandwodth prometheus.Counter
 }
 
 // NeedsCleanUp indicates if a cleanup is necessary and bandwidth can be returned.
@@ -241,12 +242,9 @@ func (e *SteadyResvEntry) PromoteToActive(idx sibra.Index, info *sbresv.Info) er
 				currTick: sibra.CurrentTick(),
 				freeRing: make([]uint64, sibra.MaxEphemTicks*2),
 			},
+			usage:e.EphUsage,
 		}
 		// If this is a local reservation, we want to monitor its uage
-		if e.LocalRes {
-			e.EphemeralBW.usage=metrics.EphBandwidthRsrvd.With(
-				prometheus.Labels{"steadyRes": e.Id.String()})
-		}
 	}
 	// Remove invalidated indexes.
 	for i := e.ActiveIndex; i != idx; i = (i + 1) % sibra.NumIndexes {
@@ -327,7 +325,13 @@ func (e *SteadyResvEntry) NonVoidIdxs(now time.Time) int {
 }
 
 func (e *SteadyResvEntry) CleanupEphemeralUsage(){
-	e.EphemeralBW.CleanUp()
+	e.Lock()
+	defer e.Unlock()
+	sub := e.Indexes[e.ActiveIndex]
+	if sub.State==sibra.StateActive{
+		assert.Must(e.EphemeralBW!=nil, "Ephemeral bandwidth must not be nil")
+		e.EphemeralBW.CleanUp()
+	}
 }
 
 // SteadyResvIdx holds information about a specific reservation index.

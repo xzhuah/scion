@@ -26,15 +26,21 @@ type PredictionController struct{
 	lastBwClass sibra.BwCls
 	promClient *metrics.PrometheusClient
 	pathID		sibra.ID
+	resKey 		string
+	lastConfirmationTime time.Time
 }
 
-func NewPredictionController(res *conf.Resv, client api.Client)(*PredictionController){
+func NewPredictionController(res *conf.Resv, resKey string, client api.Client)(*PredictionController){
 	return &PredictionController{
 		reservation:res,
 		usage:   metrics.SteadyPathsBandwidth.With(
-			prometheus.Labels{"dstAs": res.IA.String(),
-				"type":  res.PathType.String()}),
+			prometheus.Labels{
+				"dstAs": res.IA.String(),
+				"type":  res.PathType.String(),
+				"resKey":resKey}),
 		promClient:metrics.NewPrometheusClient(client, conf.Get().ID),
+		lastConfirmationTime:time.Now(),
+		resKey:resKey,
 	}
 }
 
@@ -45,6 +51,8 @@ func (c *PredictionController)ReservationConfirmed(resBlock *sbresv.Block){
 	currBw := resBlock.Info.BwCls.Bps()
 	c.usage.Add(float64(currBw-prevBw))
 	c.lastBwClass=resBlock.Info.BwCls
+
+	c.lastConfirmationTime=time.Now()
 }
 
 func (c *PredictionController)SetupReservation(config *conf.Conf) ReservationDetails{
@@ -64,9 +72,8 @@ func (c *PredictionController)calculateNextReservationSize(config *conf.Conf) Re
 		PathType:c.reservation.PathType,
 	}
 
-	log.Debug("Calculating next reservation size", "minBw", reservation.Min, "maxBw", reservation.Max)
-
-	avgUsage, err := c.promClient.GetAggregateForInterval(metrics.AVG, time.Now().Add(time.Duration(-3)*time.Minute), time.Second*10, c.pathID.String())
+	avgUsage, err := c.promClient.GetAggregateForInterval(metrics.AVG, metrics.EPHEMERAL_RES_USAGE,
+			time.Now().Add(time.Duration(-3)*time.Minute), time.Second*10, c.pathID.String())
 	if err!=nil{
 		log.Warn("Unable to query Prometheus database, using default values!", "error", err)
 		return reservation
@@ -76,7 +83,7 @@ func (c *PredictionController)calculateNextReservationSize(config *conf.Conf) Re
 			reservation.Max=c.reservation.MinSize
 		}else{
 			log.Debug("There was usage in the past...")
-			reservation.Max=max(sibra.Bps(avgUsage.Value*2).ToBwCls(false), c.reservation.MinSize)
+			reservation.Max=limit(c.reservation.MinSize, c.reservation.MaxSize, sibra.Bps(avgUsage.Value*2).ToBwCls(false))
 		}
 		return reservation
 	}
@@ -100,10 +107,24 @@ func (c *PredictionController)ChooseIndex(pendingIndicies []*state.SteadyResvIdx
 	return pendingIndicies[j]
 }
 
-func max(first, second sibra.BwCls)(sibra.BwCls){
-	if first>second{
-		return first
+func (c *PredictionController)ShouldRenew(details ReservationDetails) bool{
+	//missBw, err := c.promClient.GetChangeFrom(metrics.MISSING_BW, time.Now().Sub(c.lastConfirmationTime))
+	//if err!=nil{
+	//	log.Warn("Unable to get missing bandwidth for last reservation", "err", err)
+	//	return false
+	//}
+	//
+	//log.Debug("Missing bandwidth", "curr", missBw.Value)
+
+	return false
+}
+
+func limit(min, max, value sibra.BwCls)(sibra.BwCls){
+	if value>max{
+		return max
+	}else if value<min{
+		return min
 	}else{
-		return second
+		return value
 	}
 }

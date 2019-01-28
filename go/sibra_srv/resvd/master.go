@@ -55,7 +55,7 @@ func (r *ResvMaster) Run() {
 				Logger:  log.New("resvKey", key),
 				stop:    make(chan struct{}),
 				resvKey: key,
-				controller:controller.NewPredictionController(res, client),
+				controller:controller.NewPredictionController(res, key, client),
 			}
 			r.ResvHandls[key] = reqstr
 			go reqstr.Run()

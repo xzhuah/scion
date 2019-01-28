@@ -16,6 +16,7 @@ package impl
 
 import (
 	"fmt"
+	"github.com/scionproto/scion/go/sibra_srv/metrics"
 	"math"
 
 	"github.com/scionproto/scion/go/lib/addr"
@@ -264,7 +265,6 @@ func (s *AlgoSlow) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 			Ifids:        p.Ifids,
 			SibraAlgo:    s,
 			EphemResvMap: state.NewEpehmResvMap(),
-			LocalRes: 	  p.Local,
 		}
 		// We do not have to worry about garbage collection of the entry
 		// since we hold the lock over the steady map.
@@ -275,6 +275,12 @@ func (s *AlgoSlow) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 	if err := stEntry.AddIdx(idx); err != nil {
 		return err
 	}
+
+	if p.PromLables!=nil{
+		stEntry.EphUsage=metrics.EphBandwidthRsrvd.With(p.PromLables)
+		stEntry.MissingBandwodth=metrics.MissingBandwidth.With(p.PromLables)
+	}
+
 	// Adjust src to id mapping
 	s.addIndex(stEntry, idx)
 	// Add temp entry to clean up failed reservations.

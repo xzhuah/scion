@@ -15,6 +15,7 @@
 package resvd
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/scionproto/scion/go/sibra_srv/resvd/controller"
 	"sync"
 	"time"
@@ -101,7 +102,7 @@ func (r *Reserver) run() error {
 		e, ok = algo.SteadyMap.Get(r.resvID)
 	}
 	if !ok || e.Expired(time.Now()) {
-		r.setupResv(config)
+		r.setupResv(config, res)
 		return nil
 	}
 	if r.isRecent(config, e) {
@@ -113,7 +114,7 @@ func (r *Reserver) run() error {
 	if r.switchIndex(config, e) {
 		return nil
 	}
-	if err := r.renewResv(config, e); err != nil {
+	if err := r.renewResv(config, e, res); err != nil {
 		r.Error("Unable to renew", "err", err)
 	}
 	return nil
@@ -126,17 +127,15 @@ func (r *Reserver) isRecent(config *conf.Conf, e *state.SteadyResvEntry) bool {
 	if idx == nil || idx.State != sibra.StateActive {
 		return false
 	}
-	// XXX(roosd): Remove "false" for constant renewal requests in testing environment.
-	//ia, _ := addr.IAFromString("2-ff00:0:222")
-	//if ia.Eq(config.PublicAddr.IA) && false {
-	//	if time.Until(idx.Info.ExpTick.Time()) < (sibra.MaxSteadyTicks-4)*sibra.TickDuration {
-	//		return false
-	//	}
-	//}
 	if time.Until(idx.Info.ExpTick.Time()) < 5*sibra.TickDuration {
 		return false
 	}
-	return true
+	return !r.controller.ShouldRenew(controller.ReservationDetails{
+		Min:idx.MinBW,
+		Max:idx.MaxBW,
+		Props:idx.EndProps,
+		Split:idx.Split,
+	})
 }
 
 func (r *Reserver) tempExists(config *conf.Conf, e *state.SteadyResvEntry) bool {
@@ -223,8 +222,9 @@ func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index) {
 	go c.Run(c)
 }
 
-func (r *Reserver) setupResv(config *conf.Conf) {
+func (r *Reserver) setupResv(config *conf.Conf, res *conf.Resv) {
 	resDetails := r.controller.SetupReservation(config)
+
 	s := &SteadySetup{
 		ResvReqstr: &ResvReqstr {
 			Reqstr: &Reqstr {
@@ -243,11 +243,14 @@ func (r *Reserver) setupResv(config *conf.Conf) {
 		},
 		path: r.path,
 		pt:   resDetails.PathType,
+		ephMetric: prometheus.Labels{
+			"dstAs": res.IA.String(),
+			"type":  res.PathType.String()},
 	}
 	go s.Run(s)
 }
 
-func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry) error {
+func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *conf.Resv) error {
 	resDetails := r.controller.SetupReservation(config)
 	p := &query.Params{
 		ResvID: r.resvID,
@@ -284,6 +287,9 @@ func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry) error 
 			split: resDetails.Split,
 			props: resDetails.Props,
 		},
+		ephMetric:prometheus.Labels{
+			"dstAs": res.IA.String(),
+			"type":  res.PathType.String()},
 	}
 	go s.Run(s)
 	return nil

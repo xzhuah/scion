@@ -65,6 +65,10 @@ func (c *BasicResController)ChooseIndex(pendingIndicies []*state.SteadyResvIdx) 
 func (c *BasicResController)SteadyPathIDCreated(id sibra.ID){
 }
 
+func (c *BasicResController)ShouldRenew(details ReservationDetails) bool{
+	return false
+}
+
 func abs(a sibra.Bps) sibra.Bps {
 	if a < 0 {
 		return -a

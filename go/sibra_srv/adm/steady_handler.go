@@ -15,6 +15,7 @@
 package adm
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/sibra/sbreq"
@@ -35,7 +36,7 @@ func (h *SteadyHandler) HandleResvReqEndAS(pkt *conf.ExtPkt, r *sbreq.SteadyReq)
 	if err := h.sanityCheckReqEndAS(pkt, r); err != nil {
 		return err
 	}
-	if err := AdmitSteadyResv(pkt, r); err != nil {
+	if err := AdmitSteadyResv(pkt, r, nil); err != nil {
 		return err
 	}
 	if err := h.reversePkt(pkt); err != nil {
@@ -78,7 +79,7 @@ func (h *SteadyHandler) HandleIdxConfEndAS(pkt *conf.ExtPkt, r *sbreq.ConfirmInd
 
 func (h *SteadyHandler) HandleResvReqHopAS(pkt *conf.ExtPkt, r *sbreq.SteadyReq) error {
 	log.Debug("Handling steady request on hop AS", "id", pkt.Steady.GetCurrID())
-	if err := AdmitSteadyResv(pkt, r); err != nil {
+	if err := AdmitSteadyResv(pkt, r, nil); err != nil {
 		return err
 	}
 	return util.Forward(pkt)
@@ -105,7 +106,7 @@ func (h *SteadyHandler) HandleIdxConfHopAS(pkt *conf.ExtPkt, r *sbreq.ConfirmInd
 // General functions
 /////////////////////////////////////////
 
-func AdmitSteadyResv(pkt *conf.ExtPkt, r *sbreq.SteadyReq) error {
+func AdmitSteadyResv(pkt *conf.ExtPkt, r *sbreq.SteadyReq, metricsLables prometheus.Labels) error {
 	ifids, err := util.GetResvIfids(pkt.Steady.Base, pkt.Spkt)
 	if err != nil {
 		return err
@@ -117,10 +118,7 @@ func AdmitSteadyResv(pkt *conf.ExtPkt, r *sbreq.SteadyReq) error {
 		Req:      r,
 		Src:      pkt.Spkt.SrcIA,
 		Accepted: pkt.Pld.Accepted,
-	}
-	config := conf.Get()
-	if pkt.Spkt.SrcIA.Eq(config.PublicAddr.IA){
-		params.Local=true
+		PromLables: metricsLables,
 	}
 	res, err := pkt.Conf.SibraAlgo.AdmitSteady(params)
 	if err != nil {

@@ -198,9 +198,9 @@ func (j *steadyJanitor) Run(m *steadyResvMap) {
 	for {
 		select {
 		case <-ticker.C:
-			m.CleanupEphemeralUsage()
 			m.CollectBandwidth()
 			m.DeleteExpired()
+			m.CleanupEphemeralUsage()
 		case <-j.stop:
 			ticker.Stop()
 			return

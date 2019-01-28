@@ -15,6 +15,7 @@
 package sbalgo
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
 
@@ -51,7 +52,7 @@ type AdmParams struct {
 	Req      *sbreq.SteadyReq
 	Src      addr.IA
 	Accepted bool
-	Local 	 bool
+	PromLables prometheus.Labels
 }
 
 type CleanParams struct {

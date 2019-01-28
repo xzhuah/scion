@@ -15,6 +15,7 @@
 package resvd
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 
 	"github.com/patrickmn/go-cache"
@@ -234,6 +235,7 @@ type SteadySetup struct {
 	*ResvReqstr
 	path *spathmeta.AppPath
 	pt   sibra.PathType
+	ephMetric prometheus.Labels
 }
 
 func (s *SteadySetup) probeRLC() (sibra.RLC, error) {
@@ -283,7 +285,8 @@ func (s *SteadySetup) CreateExtPkt() (*conf.ExtPkt, error) {
 
 func (s *SteadySetup) PrepareReq(pkt *conf.ExtPkt) error {
 	resvReq := pkt.Pld.Data.(*sbreq.SteadyReq)
-	if err := adm.AdmitSteadyResv(pkt, resvReq); err != nil {
+
+	if err := adm.AdmitSteadyResv(pkt, resvReq, s.ephMetric); err != nil {
 		return common.NewBasicError("Unable to admit reservation", err)
 	}
 	if !pkt.Pld.Accepted {
@@ -325,6 +328,7 @@ func (s *SteadySetup) HandleRep(pkt *conf.ExtPkt) error {
 
 type SteadyRenew struct {
 	*ResvReqstr
+	ephMetric prometheus.Labels
 }
 
 func (s *SteadyRenew) PrepareReq(pkt *conf.ExtPkt) error {
@@ -341,7 +345,7 @@ func (s *SteadyRenew) PrepareReq(pkt *conf.ExtPkt) error {
 	if err != nil {
 		return err
 	}
-	if err := adm.AdmitSteadyResv(pkt, pkt.Pld.Data.(*sbreq.SteadyReq)); err != nil {
+	if err := adm.AdmitSteadyResv(pkt, pkt.Pld.Data.(*sbreq.SteadyReq), s.ephMetric); err != nil {
 		return common.NewBasicError("Unable to admit reservation", err)
 	}
 	if !pkt.Pld.Accepted {

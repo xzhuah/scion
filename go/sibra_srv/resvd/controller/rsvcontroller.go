@@ -28,4 +28,5 @@ type ReservationController interface {
 	ReservationConfirmed(resBlock *sbresv.Block)
 	ChooseIndex([]*state.SteadyResvIdx) *state.SteadyResvIdx
 	SteadyPathIDCreated(id sibra.ID)
+	ShouldRenew(details ReservationDetails) bool
 }
