@@ -134,7 +134,7 @@ func (r *TelescopedReserver) setupResv(config *conf.Conf, res *conf.Resv, baseId
 func (r *TelescopedReserver) preparePath(config *conf.Conf, res *conf.Resv, basePath *spathmeta.AppPath) bool {
 	assert.Must(basePath != nil, "Base path must exist!")
 
-	pathPred := spathmeta.PathPredicate{
+	pathPred := spathmeta.PathPredicate {
 		Match:basePath.Entry.Path.Interfaces,
 	}
 

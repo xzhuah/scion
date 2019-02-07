@@ -278,9 +278,9 @@ const (
 	EndLocal      EndProps = 0x01
 	EndTransfer   EndProps = 0x02
 
+	TeleBase = "B"
 	Start    = "Start"
 	End      = "End"
-	Telesco      = "Telescope"
 	Local    = "L"
 	Transfer = "T"
 )
@@ -308,14 +308,6 @@ func (e EndProps) TelescopeBase() bool {
 	return (e & TelescopeBase) != 0
 }
 
-func (e EndProps) SetTelescopeBase(enabled bool) {
-	if enabled {
-		e |= TelescopeBase
-	}else{
-		e &= ^TelescopeBase
-	}
-}
-
 func EndPropsFromMap(m map[string][]string) EndProps {
 	var props EndProps
 	for k, v := range m {
@@ -329,6 +321,8 @@ func EndPropsFromMap(m map[string][]string) EndProps {
 				props |= EndLocal
 			case k == End && s == Transfer:
 				props |= EndTransfer
+			case s == TeleBase:
+				props |= TelescopeBase
 			}
 		}
 	}

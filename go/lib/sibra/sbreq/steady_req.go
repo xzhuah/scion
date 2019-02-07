@@ -169,6 +169,10 @@ func (r *SteadyReq) Reverse() (Data, error) {
 	return c, nil
 }
 
+func (r *SteadyReq) IsTelescope() bool {
+	return r.BaseID.Len() != 0
+}
+
 func (r *SteadyReq) String() string {
 	return fmt.Sprintf("Info: [%s] Max: %v Min: %v AccBw: %v FailHop: %d Split: %v "+
 		"EndProps: %v OfferFields: %s", r.Info, r.MaxBw, r.MinBw, r.AccBw, r.FailHop, r.Split,

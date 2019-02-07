@@ -38,13 +38,28 @@ func admitSteady(s sbalgo.Algo, p sbalgo.AdmParams, topo *topology.Topo) (sbalgo
 
 	var knownBaseReservation bool = false
 	var avail sibra.Bps = 0
-	if p.Req.BaseID.Len() != 0 {
+	if p.Req.IsTelescope() {
 		log.Debug("Handling request for telescoped reservation")
 		var err error
 		knownBaseReservation, avail, err = s.AvailableForTelescope(p.Src, p.Ifids, p.Extn.GetCurrID(), p.Req.BaseID)
 		if err != nil {
 			return sbalgo.SteadyRes{}, err
 		}
+	}
+
+	// In case last hop is on a path that is already covered by base reservation - telescope is not extending it i.e. error
+	if knownBaseReservation && p.Extn.LastHop(){
+		return sbalgo.SteadyRes{}, common.NewBasicError("Telescope reservation must extend base reservation", nil)
+	}
+
+	// Last hop of a telescope base won't be doing an admission since we don't know the exit interface
+	if p.Extn.LastHop() && p.Req.EndProps.TelescopeBase(){
+		return sbalgo.SteadyRes {
+			MaxBw: p.Req.MaxBw,
+			AllocBw: p.Req.AccBw,
+			MinBw:p.Req.MinBw,
+			Accepted:p.Accepted,
+		}, nil
 	}
 
 	if !knownBaseReservation {

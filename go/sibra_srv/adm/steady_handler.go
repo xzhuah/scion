@@ -43,7 +43,7 @@ func (h *SteadyHandler) HandleResvReqEndAS(pkt *conf.ExtPkt, r *sbreq.SteadyReq)
 	if err := h.reversePkt(pkt); err != nil {
 		return err
 	}
-	if pkt.Pld.Accepted {
+	if pkt.Pld.Accepted && !r.EndProps.TelescopeBase() {
 		if err := PromoteToSOFCreated(pkt); err != nil {
 			return err
 		}

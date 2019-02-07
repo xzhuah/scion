@@ -71,6 +71,15 @@ func (m *steadyResvMap) Get(id sibra.ID) (*SteadyResvEntry, bool) {
 	return m.get(id)
 }
 
+func (m *steadyResvMap) GetBaseReservation(id sibra.ID) (*SteadyResvEntry, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var baseRes *SteadyResvEntry=nil
+	var found bool = false
+	for baseRes, found = m.get(id); found && baseRes.BaseResv!=nil; baseRes=baseRes.BaseResv{}
+	return baseRes, found
+}
+
 func (m *steadyResvMap) get(id sibra.ID) (*SteadyResvEntry, bool) {
 	r, ok := m.resvs[string([]byte(id))]
 	if !ok {

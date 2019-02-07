@@ -26,7 +26,6 @@ import (
 
 const (
 	ResvName = "reservations.json"
-
 	ErrorOpenResvs  = "Unable to open reservation map"
 	ErrorParseResvs = "Unable to parse reservation map from JSON"
 )
