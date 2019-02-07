@@ -39,7 +39,7 @@ import (
 
 // pktBufSize is the maxiumum size of a packet buffer.
 // FIXME(kormat): this should be reduced as soon as we respect the actual link MTU.
-const pktBufSize = 9 * 1024
+const pktBufSize = 1 << 16
 
 // callbacks is an anonymous struct used for functions supplied by the router
 // for various processing tasks.
