@@ -46,6 +46,10 @@ func (i IFTuple) Reverse() IFTuple {
 	}
 }
 
+func (a IFTuple) Eq(b IFTuple) bool {
+	return a.EgIfid==b.EgIfid && a.InIfid==b.InIfid
+}
+
 type AdmParams struct {
 	Ifids    IFTuple
 	Extn     *sbextn.Steady
@@ -69,7 +73,8 @@ type SteadyAdm interface {
 	AdmitSteady(params AdmParams) (SteadyRes, error)
 	Ideal(params AdmParams) sibra.Bps
 	Available(ifids IFTuple, id sibra.ID) sibra.Bps
-	AddSteadyResv(params AdmParams, alloc sibra.BwCls) error
+	AvailableForTelescope(src addr.IA, ifids IFTuple, id, baseId sibra.ID) (doneAdmission bool, available sibra.Bps, err error)
+	AddSteadyResv(params AdmParams, alloc sibra.BwCls, knownBaseRes bool) error
 	CleanSteadyResv(c CleanParams)
 	PromoteToSOFCreated(ifids IFTuple, id sibra.ID, info *sbresv.Info) error
 	PromoteToPending(ifids IFTuple, id sibra.ID, c *sbreq.ConfirmIndex) error

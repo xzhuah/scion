@@ -36,6 +36,7 @@ func (h *SteadyHandler) HandleResvReqEndAS(pkt *conf.ExtPkt, r *sbreq.SteadyReq)
 	if err := h.sanityCheckReqEndAS(pkt, r); err != nil {
 		return err
 	}
+
 	if err := AdmitSteadyResv(pkt, r, nil); err != nil {
 		return err
 	}
@@ -111,8 +112,7 @@ func AdmitSteadyResv(pkt *conf.ExtPkt, r *sbreq.SteadyReq, metricsLables prometh
 	if err != nil {
 		return err
 	}
-	log.Debug("Admitting steady reservation", "id", pkt.Steady.GetCurrID(), "ifids", ifids)
-	params := sbalgo.AdmParams{
+	params := sbalgo.AdmParams {
 		Ifids:    ifids,
 		Extn:     pkt.Steady,
 		Req:      r,

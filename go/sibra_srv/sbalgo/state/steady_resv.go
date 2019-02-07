@@ -344,6 +344,12 @@ func (e *SteadyResvEntry) ReportMissingBW(need, has sibra.Bps) {
 	}
 }
 
+func (e *SteadyResvEntry) AddTelescopedChild(child *SteadyResvEntry) {
+	e.Lock()
+	defer e.Unlock()
+	e.Telescopes=append(e.Telescopes, child)
+}
+
 // SteadyResvIdx holds information about a specific reservation index.
 type SteadyResvIdx struct {
 	Info       sbresv.Info

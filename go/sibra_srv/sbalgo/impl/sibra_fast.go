@@ -139,6 +139,10 @@ func (s *AlgoFast) Available(ifids sbalgo.IFTuple, id sibra.ID) sibra.Bps {
 	return sibra.Bps(float64(free+alloc) * s.Delta)
 }
 
+func (s *AlgoFast) AvailableForTelescope(src addr.IA, ifids sbalgo.IFTuple, id, baseId sibra.ID) (bool, sibra.Bps, error){
+	return false, 0, nil
+}
+
 // Ideal calculates the ideal bandwidth the reservation should get. It assumes
 // the caller holds the lock over the receiver.
 func (s *AlgoFast) Ideal(p sbalgo.AdmParams) sibra.Bps {
@@ -301,7 +305,7 @@ func (s *AlgoFast) tempSrcAlloc(prevBw, srcAlloc sibra.Bps, c *calcState) sibra.
 
 // AddSteadyResv adds a steady reservation given the parameters and the allocated
 // bandwidth. It assumes that the caller holds the lock over the receiver.
-func (s *AlgoFast) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
+func (s *AlgoFast) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls, knownBaseRes bool) error {
 	// Add index and reserve the required bandwidth.
 	info := *p.Req.Info
 	info.BwCls = alloc

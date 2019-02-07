@@ -36,9 +36,23 @@ func admitSteady(s sbalgo.Algo, p sbalgo.AdmParams, topo *topology.Topo) (sbalgo
 		return sbalgo.SteadyRes{Accepted:false}, nil
 	}
 
+	var knownBaseReservation bool = false
+	var avail sibra.Bps = 0
+	if p.Req.BaseID.Len() != 0 {
+		log.Debug("Handling request for telescoped reservation")
+		var err error
+		knownBaseReservation, avail, err = s.AvailableForTelescope(p.Src, p.Ifids, p.Extn.GetCurrID(), p.Req.BaseID)
+		if err != nil {
+			return sbalgo.SteadyRes{}, err
+		}
+	}
+
+	if !knownBaseReservation {
+		avail = s.Available(p.Ifids, p.Extn.GetCurrID())
+	}
+
 	// Available already makes sure that mBw cannot be larger
 	// than capacity of the in or out link.
-	avail := s.Available(p.Ifids, p.Extn.GetCurrID())
 	ideal := s.Ideal(p)
 	if avail > ideal {
 		avail = ideal
@@ -50,7 +64,7 @@ func admitSteady(s sbalgo.Algo, p sbalgo.AdmParams, topo *topology.Topo) (sbalgo
 		return res, nil
 	}
 	res.AllocBw = minBwCls(res.MaxBw, p.Req.AccBw)
-	if err := s.AddSteadyResv(p, res.AllocBw); err != nil {
+	if err := s.AddSteadyResv(p, res.AllocBw, knownBaseReservation); err != nil {
 		return sbalgo.SteadyRes{}, err
 	}
 	res.Accepted = true

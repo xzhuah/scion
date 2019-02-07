@@ -43,7 +43,7 @@ func NewSibraSlow(topo *topology.Topo, matrix state.Matrix) (*AlgoSlow, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &AlgoSlow{
+	a := &AlgoSlow {
 		base: &base{
 			ephem: &ephem{s},
 		},
@@ -65,6 +65,23 @@ func (s *AlgoSlow) Available(ifids sbalgo.IFTuple, id sibra.ID) sibra.Bps {
 	in := s.Infos[ifids.InIfid].Ingress.Total - s.reqResIn(ifids.InIfid, id)
 	eg := s.Infos[ifids.EgIfid].Egress.Total - s.reqResEg(ifids.EgIfid, id)
 	return sibra.Bps(float64(minBps(in, eg)) * s.Delta)
+}
+
+// Similar to Available. This function checks if baseId is known and if so does the admission.
+// On transit ASes available bw will be bandwidth of maximum index, on end AS there will be admission
+// It assumes the caller holds the lock over the reciver
+func (s *AlgoSlow) AvailableForTelescope(src addr.IA, ifids sbalgo.IFTuple, id, baseId sibra.ID) (bool, sibra.Bps, error ) {
+	baseRes, ok := s.SteadyMap.Get(baseId)
+	if !ok {
+		return false, 0, nil
+	}
+	//TODO: Handle case of last hop
+	//if !baseRes.Ifids.Eq(ifids) || !baseRes.Src.Eq(src){
+	//	return false, 0,
+	//		common.NewBasicError("Telescoped reservation not traversing same interfaces as underling base reservation",
+	//			nil)
+	//}
+	return true, baseRes.MaxBw(), nil
 }
 
 func (s *AlgoSlow) reqResIn(in common.IFIDType, id sibra.ID) sibra.Bps {
@@ -242,7 +259,7 @@ func (s *AlgoSlow) linkRatio(p sbalgo.AdmParams) float64 {
 
 // AddSteadyResv adds a steady reservation given the parameters and the allocated
 // bandwidth. It assumes that the caller holds the lock over the receiver.
-func (s *AlgoSlow) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
+func (s *AlgoSlow) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls, knownBaseRes bool) error {
 	// Add index and reserve the required bandwidth.
 	info := *p.Req.Info
 	info.BwCls = alloc
@@ -259,17 +276,31 @@ func (s *AlgoSlow) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 			return common.NewBasicError("Invalid initial index", nil,
 				"expected", sibra.Index(0), "actual", p.Req.Info.Index)
 		}
+
+		var baseReservation *state.SteadyResvEntry = nil
+		if knownBaseRes {
+			baseReservation , ok = s.SteadyMap.Get(p.Req.BaseID)
+			if !ok{
+				return common.NewBasicError("Unable to find base reservation entry", nil)
+			}
+		}
+
 		stEntry = &state.SteadyResvEntry{
 			Src:          p.Src,
 			Id:           p.Extn.GetCurrID().Copy(),
 			Ifids:        p.Ifids,
 			SibraAlgo:    s,
 			EphemResvMap: state.NewEpehmResvMap(),
+			BaseResv: 	  baseReservation,
+			Telescopes:   make([]*state.SteadyResvEntry,0),
 		}
 		// We do not have to worry about garbage collection of the entry
 		// since we hold the lock over the steady map.
 		if err := s.SteadyMap.Add(p.Extn.GetCurrID(), stEntry); err != nil {
 			return err
+		}
+		if baseReservation!=nil{
+			baseReservation.AddTelescopedChild(stEntry)
 		}
 	}
 	if err := stEntry.AddIdx(idx); err != nil {
@@ -288,6 +319,7 @@ func (s *AlgoSlow) AddSteadyResv(p sbalgo.AdmParams, alloc sibra.BwCls) error {
 		ResvMapEntry: stEntry,
 		Idx:          p.Req.Info.Index,
 	}
+
 	s.TempTable.Set(p.Extn.GetCurrID(), p.Req.Info.Index, tmpEntry, info.RLC.Duration())
 	return nil
 }

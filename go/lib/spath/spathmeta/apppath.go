@@ -98,7 +98,7 @@ func (ap *AppPath) Key() PathKey {
 
 func (ap *AppPath) Copy() *AppPath {
 	// FIXME(scrye): this might need deep copying as well
-	return &AppPath{
+	return &AppPath {
 		Entry: ap.Entry,
 	}
 }

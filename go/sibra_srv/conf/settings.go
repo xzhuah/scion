@@ -42,6 +42,7 @@ type Resv struct {
 	MaxSize       sibra.BwCls
 	SplitCls      sibra.SplitCls
 	EndProps      sibra.EndProps
+	Telescoping   string
 }
 
 func ReservationsFromRaw(b common.RawBytes) (ResvsMap, error) {

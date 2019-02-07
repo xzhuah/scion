@@ -17,7 +17,7 @@ package resvd
 import (
 	"bufio"
 	"fmt"
-	"github.com/prometheus/client_golang/api"
+	"github.com/scionproto/scion/go/lib/spath/spathmeta"
 	"github.com/scionproto/scion/go/sibra_srv/resvd/controller"
 	"sort"
 	"sync"
@@ -32,9 +32,18 @@ import (
 
 var _ conf.RepMaster = (*ResvMaster)(nil)
 
+type Reserver interface {
+	Closed() bool
+	Run()
+	Close()
+	GetReservationPath() *spathmeta.AppPath
+	GetReservationID() sibra.ID
+
+}
+
 type ResvMaster struct {
 	mu         sync.RWMutex
-	ResvHandls map[string]*Reserver
+	ResvHandls map[string]Reserver
 	Notify     map[string]chan *conf.ExtPkt
 	Controller controller.ReservationController
 }
@@ -44,19 +53,32 @@ func (r *ResvMaster) Run() {
 	defer r.mu.Unlock()
 
 	//TODO: Remove this hardcoded value
-	client, err := api.NewClient(api.Config{Address:"http://localhost:9090"})
-	if err!=nil{
-		log.Warn("Couldn't establish connection with prometheus server")
-	}
+	//client, err := api.NewClient(api.Config{Address:"http://localhost:9090"})
+	//if err!=nil{
+	//	log.Warn("Couldn't establish connection with prometheus server")
+	//}
 
 	for key, res := range conf.Get().Reservations {
 		if reqstr, ok := r.ResvHandls[key]; !ok || reqstr.Closed() {
-			reqstr = &Reserver{
+
+			baseRes := &BaseReserver {
 				Logger:  log.New("resvKey", key),
 				stop:    make(chan struct{}),
 				resvKey: key,
-				controller:controller.NewPredictionController(res, key, client),
+				controller:controller.NewBasicReservationController(res),
 			}
+
+			// In case this is a telescoped reservation, different behaviour is expected
+			if res.Telescoping != "" {
+				log.Debug("Creating new telescoped reserver")
+				reqstr = &TelescopedReserver{
+					BaseReserver: baseRes,
+					baseResKey:res.Telescoping,
+				}
+			}else{
+				reqstr = baseRes
+			}
+
 			r.ResvHandls[key] = reqstr
 			go reqstr.Run()
 		}
@@ -118,6 +140,26 @@ func (r *ResvMaster) Close() {
 	for _, reqstr := range r.ResvHandls {
 		reqstr.Close()
 	}
+}
+
+func (r *ResvMaster) GetReservationsPath(resKey string) (*spathmeta.AppPath, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	resHandler, found := r.ResvHandls[resKey]
+	if !found {
+		return nil, common.NewBasicError("Cannot fetch path info for unknown reservation", nil)
+	}
+	return resHandler.GetReservationPath(), nil
+}
+
+func (r *ResvMaster) GetReservationId(resKey string) (sibra.ID, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	resHandler, found := r.ResvHandls[resKey]
+	if !found {
+		return nil, common.NewBasicError("Cannot fetch path info for unknown reservation", nil)
+	}
+	return resHandler.GetReservationID(), nil
 }
 
 func (r *ResvMaster) writeResvs(writer bufio.Writer, stop <-chan struct{}) {

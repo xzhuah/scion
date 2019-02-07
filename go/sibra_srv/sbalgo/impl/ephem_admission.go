@@ -57,9 +57,7 @@ func (e *ephem) setup(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes, err
 	}
 	if !p.Accepted {
 		res := e.checkBw(stEntry, info)
-
 		stEntry.ReportMissingBW(info.BwCls.Bps(), res.MaxBw.Bps())
-
 		return e.checkBw(stEntry, info), nil
 	}
 	id := p.Data.(*sbreq.EphemReq).ID

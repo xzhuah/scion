@@ -272,6 +272,7 @@ func (c SplitCls) EphemFctr() float64 {
 }
 
 const (
+	TelescopeBase EndProps = 0x80
 	StartLocal    EndProps = 0x10
 	StartTransfer EndProps = 0x20
 	EndLocal      EndProps = 0x01
@@ -279,6 +280,7 @@ const (
 
 	Start    = "Start"
 	End      = "End"
+	Telesco      = "Telescope"
 	Local    = "L"
 	Transfer = "T"
 )
@@ -300,6 +302,18 @@ func (e EndProps) EndLocal() bool {
 
 func (e EndProps) EndTransfer() bool {
 	return (e & EndTransfer) != 0
+}
+
+func (e EndProps) TelescopeBase() bool {
+	return (e & TelescopeBase) != 0
+}
+
+func (e EndProps) SetTelescopeBase(enabled bool) {
+	if enabled {
+		e |= TelescopeBase
+	}else{
+		e &= ^TelescopeBase
+	}
 }
 
 func EndPropsFromMap(m map[string][]string) EndProps {

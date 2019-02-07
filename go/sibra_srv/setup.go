@@ -97,7 +97,7 @@ func setupNewConf(config *conf.Conf) error {
 
 	config.RepMaster = &resvd.ResvMaster{
 		Notify:     make(map[string]chan *conf.ExtPkt),
-		ResvHandls: make(map[string]*resvd.Reserver),
+		ResvHandls: make(map[string]resvd.Reserver),
 	}
 	defer func() { go config.RepMaster.Run() }()
 	conf.Set(config)

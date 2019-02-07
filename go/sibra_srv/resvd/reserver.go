@@ -48,7 +48,7 @@ func getID(config *conf.Conf) sibra.ID {
 	return id
 }
 
-type Reserver struct {
+type BaseReserver struct {
 	sync.Mutex
 	log.Logger
 	resvKey   string
@@ -64,7 +64,7 @@ type Reserver struct {
 	controller controller.ReservationController
 }
 
-func (r *Reserver) Run() {
+func (r *BaseReserver) Run() {
 	for {
 		select {
 		case <-r.stop:
@@ -85,7 +85,7 @@ Stop:
 	r.Warn("Reserver broke out of infinite loop")
 }
 
-func (r *Reserver) run() error {
+func (r *BaseReserver) run() error {
 	config := conf.Get()
 	res, ok := config.Reservations[r.resvKey]
 	if !ok {
@@ -120,7 +120,7 @@ func (r *Reserver) run() error {
 	return nil
 }
 
-func (r *Reserver) isRecent(config *conf.Conf, e *state.SteadyResvEntry) bool {
+func (r *BaseReserver) isRecent(config *conf.Conf, e *state.SteadyResvEntry) bool {
 	e.RLock()
 	defer e.RUnlock()
 	idx := e.Indexes[e.ActiveIndex]
@@ -138,7 +138,7 @@ func (r *Reserver) isRecent(config *conf.Conf, e *state.SteadyResvEntry) bool {
 	})
 }
 
-func (r *Reserver) tempExists(config *conf.Conf, e *state.SteadyResvEntry) bool {
+func (r *BaseReserver) tempExists(config *conf.Conf, e *state.SteadyResvEntry) bool {
 	e.RLock()
 	defer e.RUnlock()
 	for _, idx := range e.Indexes {
@@ -149,7 +149,7 @@ func (r *Reserver) tempExists(config *conf.Conf, e *state.SteadyResvEntry) bool 
 	return false
 }
 
-func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) bool {
+func (r *BaseReserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) bool {
 	e.Lock()
 	defer e.Unlock()
 	idx := e.Indexes[e.ActiveIndex]
@@ -182,7 +182,7 @@ func (r *Reserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) bool
 	return true
 }
 
-func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index) {
+func (r *BaseReserver) activateIdx(config *conf.Conf, idx sibra.Index) {
 	r.Debug("Starting to activate index", "idx", idx)
 	e := config.LocalResvs.Get(r.resvID, idx)
 
@@ -224,7 +224,7 @@ func (r *Reserver) activateIdx(config *conf.Conf, idx sibra.Index) {
 	go c.Run(c)
 }
 
-func (r *Reserver) setupResv(config *conf.Conf, res *conf.Resv) {
+func (r *BaseReserver) setupResv(config *conf.Conf, res *conf.Resv) {
 	resDetails := r.controller.SetupReservation(config)
 
 	s := &SteadySetup{
@@ -252,7 +252,7 @@ func (r *Reserver) setupResv(config *conf.Conf, res *conf.Resv) {
 	go s.Run(s)
 }
 
-func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *conf.Resv) error {
+func (r *BaseReserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *conf.Resv) error {
 	resDetails := r.controller.RenewReservation(config)
 	p := &query.Params{
 		ResvID: r.resvID,
@@ -272,7 +272,7 @@ func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *c
 	r.Debug("Starting renew request", "idx", idx)
 	s := &SteadyRenew{
 		ResvReqstr: &ResvReqstr{
-			Reqstr: &Reqstr{
+			Reqstr: &Reqstr {
 				Logger:  r.Logger.New("reqstr", "SteadyRenew", "id", r.resvID, "idx", idx),
 				id:      r.resvID,
 				idx:     idx,
@@ -297,7 +297,7 @@ func (r *Reserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *c
 	return nil
 }
 
-func (r *Reserver) findFreeIdx(e *state.SteadyResvEntry) (sibra.Index, error) {
+func (r *BaseReserver) findFreeIdx(e *state.SteadyResvEntry) (sibra.Index, error) {
 	e.RLock()
 	defer e.RUnlock()
 	start := (e.ActiveIndex + 1) % sibra.NumIndexes
@@ -309,13 +309,13 @@ func (r *Reserver) findFreeIdx(e *state.SteadyResvEntry) (sibra.Index, error) {
 	return 0, common.NewBasicError("All indexes occupied", nil)
 }
 
-func (r *Reserver) preparePath(config *conf.Conf, res *conf.Resv) bool {
-	if !r.checkPath(config, res) {
-		if err := r.setSyncPaths(config, res); err != nil {
+func (r *BaseReserver) preparePath(config *conf.Conf, res *conf.Resv) bool {
+	if !r.checkPath(config, res.PathPredicate) {
+		if err := r.setSyncPaths(config, res.PathPredicate, res.IA); err != nil {
 			r.Debug("Unable to set sync path", "err", err)
 			return false
 		}
-		if !r.checkPath(config, res) {
+		if !r.checkPath(config, res.PathPredicate) {
 			r.Debug("No path found")
 			return false
 		}
@@ -333,25 +333,25 @@ func (r *Reserver) preparePath(config *conf.Conf, res *conf.Resv) bool {
 	return true
 }
 
-func (r *Reserver) checkPath(config *conf.Conf, res *conf.Resv) bool {
+func (r *BaseReserver) checkPath(config *conf.Conf, pathPred *spathmeta.PathPredicate) bool {
 	if r.syncPaths == nil || r.syncPaths.Load().APS.GetAppPath(r.pathKey) == nil {
 		return false
 	}
-	if r.pred != res.PathPredicate.String() {
+	if r.pred != pathPred.String() {
 		return false
 	}
 	return true
 }
 
-func (r *Reserver) setSyncPaths(config *conf.Conf, res *conf.Resv) error {
+func (r *BaseReserver) setSyncPaths(config *conf.Conf, pathPred *spathmeta.PathPredicate, dst addr.IA) error {
 	var err error
 	r.pathKey = ""
 	pathRes := snet.DefNetwork.PathResolver()
-	if r.pred != res.PathPredicate.String() {
-		r.pred = res.PathPredicate.String()
+	if r.pred != pathPred.String() {
+		r.pred = pathPred.String()
 		r.filter = pktcls.NewActionFilterPaths(
-			r.resvKey, pktcls.NewCondPathPredicate(res.PathPredicate))
-		r.syncPaths, err = pathRes.WatchFilter(config.PublicAddr.IA, res.IA, r.filter)
+			r.resvKey, pktcls.NewCondPathPredicate(pathPred))
+		r.syncPaths, err = pathRes.WatchFilter(config.PublicAddr.IA, dst, r.filter)
 		if err != nil {
 			return err
 		}
@@ -359,7 +359,7 @@ func (r *Reserver) setSyncPaths(config *conf.Conf, res *conf.Resv) error {
 	return nil
 }
 
-func (r *Reserver) getPath(config *conf.Conf) (*spathmeta.AppPath, bool) {
+func (r *BaseReserver) getPath(config *conf.Conf) (*spathmeta.AppPath, bool) {
 	path := r.syncPaths.Load().APS.GetAppPath(r.pathKey)
 	if path == nil {
 		return nil, true
@@ -370,7 +370,7 @@ func (r *Reserver) getPath(config *conf.Conf) (*spathmeta.AppPath, bool) {
 	return path, false
 }
 
-func (r *Reserver) pathToIntfs(path *spathmeta.AppPath,
+func (r *BaseReserver) pathToIntfs(path *spathmeta.AppPath,
 	pathType sibra.PathType) []sibra_mgmt.PathInterface {
 
 	intfs := make([]sibra_mgmt.PathInterface, len(r.path.Entry.Path.Interfaces))
@@ -386,7 +386,15 @@ func (r *Reserver) pathToIntfs(path *spathmeta.AppPath,
 	return intfs
 }
 
-func (r *Reserver) Close() {
+func (r *BaseReserver) GetReservationPath() *spathmeta.AppPath {
+	return r.path
+}
+
+func (r *BaseReserver) GetReservationID() sibra.ID {
+	return r.resvID
+}
+
+func (r *BaseReserver) Close() {
 	r.Lock()
 	defer r.Unlock()
 	if !r.stopped {
@@ -395,7 +403,7 @@ func (r *Reserver) Close() {
 	}
 }
 
-func (r *Reserver) Closed() bool {
+func (r *BaseReserver) Closed() bool {
 	r.Lock()
 	defer r.Unlock()
 	return r.stopped

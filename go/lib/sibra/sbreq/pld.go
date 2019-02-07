@@ -97,7 +97,7 @@ func PldFromRaw(raw common.RawBytes) (*Pld, error) {
 func (p *Pld) parseData(raw common.RawBytes) error {
 	var err error
 	switch p.Type {
-	case RSteadySetup, RSteadyRenewal:
+	case RSteadySetup, RSteadyRenewal, RSteadySetupTelescope:
 		p.Data, err = p.parseSteadyResv(raw, int(p.NumHops))
 	case RSteadyConfIndex:
 		p.Data, err = ConfirmIndexFromRaw(raw)

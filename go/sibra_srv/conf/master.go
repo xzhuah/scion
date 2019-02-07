@@ -15,6 +15,7 @@
 package conf
 
 import (
+	"github.com/scionproto/scion/go/lib/spath/spathmeta"
 	"strconv"
 
 	"github.com/scionproto/scion/go/lib/infra"
@@ -50,4 +51,8 @@ type RepMaster interface {
 	Handle(pkt *ExtPkt) error
 	Register(key *NotifyKey, c chan *ExtPkt) error
 	Deregister(key *NotifyKey)
+
+	//TODO: Merge these two into one API call
+	GetReservationsPath(resKey string) (*spathmeta.AppPath, error)
+	GetReservationId(resKey string) (sibra.ID, error)
 }
