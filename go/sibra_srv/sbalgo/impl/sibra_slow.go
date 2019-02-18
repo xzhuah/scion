@@ -44,7 +44,7 @@ func NewSibraSlow(topo *topology.Topo, matrix state.Matrix) (*AlgoSlow, error) {
 		return nil, err
 	}
 	a := &AlgoSlow {
-		base: &base{
+		base: &base {
 			ephem: &ephem{s},
 		},
 		SrcToIds: make(map[addr.IA]map[string]struct{}),

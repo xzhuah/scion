@@ -71,7 +71,7 @@ func (r *ResvMaster) Run() {
 			// In case this is a telescoped reservation, different behaviour is expected
 			if res.Telescoping != "" {
 				log.Debug("Creating new telescoped reserver")
-				reqstr = &TelescopedReserver{
+				reqstr = &TelescopedReserver {
 					BaseReserver: baseRes,
 					baseResKey:res.Telescoping,
 				}

@@ -23,6 +23,7 @@ import (
 type TelescopedReserver struct {
 	*BaseReserver
 	baseResKey 	string
+	pathPredicate spathmeta.PathPredicate
 }
 
 func (r *TelescopedReserver) Run() {
@@ -153,6 +154,7 @@ func (r *TelescopedReserver) preparePath(config *conf.Conf, res *conf.Resv, base
 		r.Debug("Unable to get path")
 		return false
 	}
+
 	if n {
 		r.pathKey = path.Key()
 		r.resvID = getID(config)

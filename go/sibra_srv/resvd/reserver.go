@@ -57,6 +57,7 @@ type BaseReserver struct {
 	filter    *pktcls.ActionFilterPaths
 	pred      string
 	pathKey   spathmeta.PathKey
+	pathLock  sync.RWMutex
 	path      *spathmeta.AppPath
 	notifyReg chan NotifyReg
 	stop      chan struct{}
@@ -87,14 +88,16 @@ Stop:
 
 func (r *BaseReserver) run() error {
 	config := conf.Get()
-	res, ok := config.Reservations[r.resvKey]
-	if !ok {
+	res, status := config.Reservations.GetReservation(r.resvKey)
+	if status.IsDeleted() {
+		//TODO: Initiate cleanup procedure of this reservation
 		return common.NewBasicError("Reservation not found", nil)
 	}
 	if !r.preparePath(config, res) {
 		return nil
 	}
 	var e *state.SteadyResvEntry
+	var ok bool
 	switch algo := config.SibraAlgo.(type) {
 	case *impl.AlgoFast:
 		e, ok = algo.SteadyMap.Get(r.resvID)
@@ -183,6 +186,9 @@ func (r *BaseReserver) switchIndex(config *conf.Conf, e *state.SteadyResvEntry) 
 }
 
 func (r *BaseReserver) activateIdx(config *conf.Conf, idx sibra.Index) {
+	r.pathLock.RLock()
+	defer r.pathLock.RUnlock()
+
 	r.Debug("Starting to activate index", "idx", idx)
 	e := config.LocalResvs.Get(r.resvID, idx)
 
@@ -227,6 +233,9 @@ func (r *BaseReserver) activateIdx(config *conf.Conf, idx sibra.Index) {
 func (r *BaseReserver) setupResv(config *conf.Conf, res *conf.Resv) {
 	resDetails := r.controller.SetupReservation(config)
 
+	r.pathLock.RLock()
+	defer r.pathLock.RUnlock()
+
 	s := &SteadySetup{
 		ResvReqstr: &ResvReqstr {
 			Reqstr: &Reqstr {
@@ -254,6 +263,10 @@ func (r *BaseReserver) setupResv(config *conf.Conf, res *conf.Resv) {
 
 func (r *BaseReserver) renewResv(config *conf.Conf, e *state.SteadyResvEntry, res *conf.Resv) error {
 	resDetails := r.controller.RenewReservation(config)
+
+	r.pathLock.RLock()
+	defer r.pathLock.RUnlock()
+
 	p := &query.Params{
 		ResvID: r.resvID,
 		SegID:  sibra_mgmt.PathToSegID(r.pathToIntfs(r.path, resDetails.PathType)),
@@ -329,6 +342,9 @@ func (r *BaseReserver) preparePath(config *conf.Conf, res *conf.Resv) bool {
 		r.pathKey = path.Key()
 		r.resvID = getID(config)
 	}
+
+	r.pathLock.Lock()
+	defer r.pathLock.Unlock()
 	r.path = path
 	return true
 }
@@ -387,6 +403,8 @@ func (r *BaseReserver) pathToIntfs(path *spathmeta.AppPath,
 }
 
 func (r *BaseReserver) GetReservationPath() *spathmeta.AppPath {
+	r.pathLock.RLock()
+	defer r.pathLock.RUnlock()
 	return r.path
 }
 

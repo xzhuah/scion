@@ -92,7 +92,7 @@ type Conf struct {
 	Store *trust.Store
 	// Reservations holds information about the reservation the
 	// service will automatically establish.
-	Reservations ResvsMap
+	Reservations *ResvsMap
 	// Matrix holds the reservable bandwidth between interfaces.
 	Matrix state.Matrix
 	// SibraAlgo holds the algorithm with state for handling SIBRA requests.

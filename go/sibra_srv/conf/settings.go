@@ -17,6 +17,7 @@ package conf
 import (
 	"encoding/json"
 	"io/ioutil"
+	"sync"
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
@@ -30,7 +31,25 @@ const (
 	ErrorParseResvs = "Unable to parse reservation map from JSON"
 )
 
-type ResvsMap map[string]*Resv
+type ResvsMap struct {
+	sync.Mutex
+	reservations map[string]*Resv
+}
+
+type StatusFlag uint8
+const (
+	Unchanged   StatusFlag = 0x00
+	New 		StatusFlag = 0x01
+	Deleted 	StatusFlag = 0x02
+)
+
+func (sf StatusFlag)IsDeleted() bool {
+	return sf & Deleted == Deleted
+}
+
+func (sf StatusFlag)IsNew() bool {
+	return sf & New == New
+}
 
 type Resv struct {
 	IA            addr.IA
@@ -42,20 +61,42 @@ type Resv struct {
 	SplitCls      sibra.SplitCls
 	EndProps      sibra.EndProps
 	Telescoping   string
+	status 		  StatusFlag
 }
 
-func ReservationsFromRaw(b common.RawBytes) (ResvsMap, error) {
+func ReservationsFromRaw(b common.RawBytes) (*ResvsMap, error) {
 	var m ResvsMap
-	if err := json.Unmarshal(b, &m); err != nil {
+	if err := json.Unmarshal(b, &m.reservations); err != nil {
 		return nil, common.NewBasicError(ErrorOpenResvs, err)
 	}
-	return m, nil
+	for _, v := range m.reservations{
+		v.status |= New
+	}
+	return &m, nil
 }
 
-func ReservationsFromFile(path string) (ResvsMap, error) {
+func ReservationsFromFile(path string) (*ResvsMap, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, common.NewBasicError(ErrorParseResvs, err, "path", path)
 	}
 	return ReservationsFromRaw(b)
+}
+
+func (rm *ResvsMap)GetReservation(key string)(*Resv, StatusFlag){
+	rm.Lock()
+	defer rm.Unlock()
+
+	resv, exists := rm.reservations[key]
+	if !exists{
+		return nil, Deleted
+	}
+	status := resv.status
+
+	if status.IsDeleted(){
+		delete(rm.reservations, key)
+	}
+
+	resv.status=Unchanged
+	return resv, status
 }
