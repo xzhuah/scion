@@ -92,7 +92,7 @@ type Conf struct {
 	Store *trust.Store
 	// Reservations holds information about the reservation the
 	// service will automatically establish.
-	Reservations *ResvsMap
+	Reservations *ResvMonitor
 	// Matrix holds the reservable bandwidth between interfaces.
 	Matrix state.Matrix
 	// SibraAlgo holds the algorithm with state for handling SIBRA requests.
@@ -224,7 +224,7 @@ func (c *Conf) loadMatrix() (err error) {
 	return err
 }
 func (c *Conf) loadReservations() (err error) {
-	c.Reservations, err = ReservationsFromFile(filepath.Join(c.ConfDir, SibraDir, ResvName))
+ 	c.Reservations = MonitorReservationsFile(filepath.Join(c.ConfDir, SibraDir, ResvName))
 	return err
 }
 

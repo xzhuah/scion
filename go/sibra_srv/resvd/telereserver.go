@@ -51,8 +51,9 @@ func (r *TelescopedReserver) run() error {
 	config := conf.Get()
 	resMaster := conf.Get().RepMaster
 
-	res, ok := config.Reservations[r.resvKey]
+	res, ok := config.Reservations.GetReservation(r.resvKey)
 	if !ok {
+		//TODO: Cleanup this telescope!
 		return common.NewBasicError("Reservation not found", nil)
 	}
 

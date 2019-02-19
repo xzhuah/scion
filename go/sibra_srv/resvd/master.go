@@ -48,40 +48,65 @@ type ResvMaster struct {
 	Controller controller.ReservationController
 }
 
-func (r *ResvMaster) Run() {
+func (r *ResvMaster) deleteReservation(key string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	if reqstr, ok := r.ResvHandls[key]; ok{
+		reqstr.Close()
+		delete(r.ResvHandls, key)
+	}
+}
+
+func (r *ResvMaster) addNewReservation(key string) {
+	res, exists := conf.Get().Reservations.GetReservation(key)
+	if !exists {
+		return
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if reqstr, ok := r.ResvHandls[key]; !ok || reqstr.Closed() {
+		baseRes := &BaseReserver {
+			Logger:  log.New("resvKey", key),
+			stop:    make(chan struct{}),
+			resvKey: key,
+			controller:controller.NewBasicReservationController(res),
+		}
+
+		// In case this is a telescoped reservation, different behaviour is expected
+		if res.Telescoping != "" {
+			log.Debug("Creating new telescoped reserver")
+			reqstr = &TelescopedReserver {
+				BaseReserver: baseRes,
+				baseResKey:res.Telescoping,
+			}
+		}else{
+			reqstr = baseRes
+		}
+
+		r.ResvHandls[key] = reqstr
+		go reqstr.Run()
+	}
+}
+
+func (r *ResvMaster) Run() {
 	//TODO: Remove this hardcoded value
 	//client, err := api.NewClient(api.Config{Address:"http://localhost:9090"})
 	//if err!=nil{
 	//	log.Warn("Couldn't establish connection with prometheus server")
 	//}
 
-	for key, res := range conf.Get().Reservations {
-		if reqstr, ok := r.ResvHandls[key]; !ok || reqstr.Closed() {
-
-			baseRes := &BaseReserver {
-				Logger:  log.New("resvKey", key),
-				stop:    make(chan struct{}),
-				resvKey: key,
-				controller:controller.NewBasicReservationController(res),
-			}
-
-			// In case this is a telescoped reservation, different behaviour is expected
-			if res.Telescoping != "" {
-				log.Debug("Creating new telescoped reserver")
-				reqstr = &TelescopedReserver {
-					BaseReserver: baseRes,
-					baseResKey:res.Telescoping,
-				}
-			}else{
-				reqstr = baseRes
-			}
-
-			r.ResvHandls[key] = reqstr
-			go reqstr.Run()
+	for update := range conf.Get().Reservations.GetNewReservations() {
+		log.Debug("New reservation received", "key", update.Key)
+		if update.IsDeletedReservation(){
+			r.deleteReservation(update.Key)
 		}
+		if update.IsNewReservation(){
+			r.addNewReservation(update.Key)
+		}
+
 	}
 }
 

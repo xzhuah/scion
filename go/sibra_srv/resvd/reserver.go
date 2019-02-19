@@ -88,9 +88,9 @@ Stop:
 
 func (r *BaseReserver) run() error {
 	config := conf.Get()
-	res, status := config.Reservations.GetReservation(r.resvKey)
-	if status.IsDeleted() {
-		//TODO: Initiate cleanup procedure of this reservation
+	res, exists := config.Reservations.GetReservation(r.resvKey)
+	if !exists {
+		//TODO: Reservation has been deleted, initialize cleanup procedure
 		return common.NewBasicError("Reservation not found", nil)
 	}
 	if !r.preparePath(config, res) {
