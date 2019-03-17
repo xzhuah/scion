@@ -331,9 +331,14 @@ func (c *client) initResvMgr() {
 	if err != nil {
 		LogFatal("Unable to create trust store", "err", err)
 	}
-	c.mgr, err = resvmgr.New(snet.DefNetwork.Sciond(), conn, store, nil)
-	if err != nil {
-		LogFatal("Unable to start reservation manager", err)
+	for retry:=5; retry>=0; retry-- {
+		c.mgr, err = resvmgr.New(snet.DefNetwork.Sciond(), conn, store, nil)
+		if err!=nil{
+			log.Warn("Unable to start reservation manager", err)
+			time.Sleep(time.Millisecond*100)
+			continue
+		}
+		break
 	}
 }
 
