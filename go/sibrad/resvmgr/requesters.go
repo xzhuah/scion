@@ -232,6 +232,14 @@ type EphemSetup struct {
 	*reserver
 }
 
+func minTick(first, second sibra.Tick)sibra.Tick{
+	if first>second{
+		return second
+	}else{
+		return first
+	}
+}
+
 func (s *EphemSetup) PrepareRequest() (common.Extension, *sbreq.Pld, error) {
 	s.entry.Lock()
 	defer s.entry.Unlock()
@@ -240,8 +248,9 @@ func (s *EphemSetup) PrepareRequest() (common.Extension, *sbreq.Pld, error) {
 		return nil, nil, common.NewBasicError("Steady extension not available", nil)
 	}
 	steady = steady.Copy().(*sbextn.Steady)
+	maxDuration := minTick(sibra.TimeToTick(steady.Expiry()), sibra.CurrentTick() + sibra.MaxEphemTicks)
 	info := &sbresv.Info{
-		ExpTick:  sibra.CurrentTick() + sibra.MaxEphemTicks,
+		ExpTick:  maxDuration,
 		BwCls:    s.bwCls,
 		PathType: sibra.PathTypeEphemeral,
 		RLC:      sibra.DurationToRLC(combineRLC(steady), true),
@@ -315,9 +324,11 @@ func (r *EphemRenew) PrepareRequest() (common.Extension, *sbreq.Pld, error) {
 		return nil, nil, common.NewBasicError("Indexes out of sync", nil, "existing",
 			ephem.ActiveBlocks[0].Info.Index, "next", r.idx)
 	}
+	steady := r.entry.syncResv.Load().Steady
+	maxDuration := minTick(sibra.TimeToTick(steady.Expiry()), sibra.CurrentTick() + sibra.MaxEphemTicks)
 	r.id = ephem.IDs[0]
 	info := &sbresv.Info{
-		ExpTick:  sibra.CurrentTick() + sibra.MaxEphemTicks,
+		ExpTick:  maxDuration,
 		BwCls:    r.bwCls,
 		PathType: sibra.PathTypeEphemeral,
 		RLC:      ephem.ActiveBlocks[0].Info.RLC,

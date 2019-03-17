@@ -71,7 +71,7 @@ func (s *AlgoSlow) Available(ifids sbalgo.IFTuple, id sibra.ID) sibra.Bps {
 // On transit ASes available bw will be bandwidth of maximum index, on end AS there will be admission
 // It assumes the caller holds the lock over the reciver
 func (s *AlgoSlow) AvailableForTelescope(src addr.IA, ifids sbalgo.IFTuple, id, baseId sibra.ID) (bool, sibra.Bps, error ) {
-	baseRes, ok := s.SteadyMap.GetBaseReservation(baseId)
+	_, baseRes, ok := s.SteadyMap.GetBaseReservation(baseId)
 	if !ok {
 		return false, 0, nil
 	}

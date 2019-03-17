@@ -270,6 +270,7 @@ func (r *Mgr) listenQuits() {
 		}
 	}
 }
+
 func (r *Mgr) stopResolver(key ResvKey) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

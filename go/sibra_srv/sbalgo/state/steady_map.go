@@ -71,13 +71,13 @@ func (m *steadyResvMap) Get(id sibra.ID) (*SteadyResvEntry, bool) {
 	return m.get(id)
 }
 
-func (m *steadyResvMap) GetBaseReservation(id sibra.ID) (*SteadyResvEntry, bool) {
+func (m *steadyResvMap) GetBaseReservation(id sibra.ID) (telescope, baseRes *SteadyResvEntry, found bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	var baseRes *SteadyResvEntry=nil
-	var found bool = false
-	for baseRes, found = m.get(id); found && baseRes.BaseResv!=nil; baseRes=baseRes.BaseResv{}
-	return baseRes, found
+	found = false
+	telescope, found = m.get(id)
+	for baseRes=telescope; found && baseRes.BaseResv!=nil; baseRes=baseRes.BaseResv{}
+	return telescope, baseRes, found
 }
 
 func (m *steadyResvMap) get(id sibra.ID) (*SteadyResvEntry, bool) {

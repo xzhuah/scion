@@ -55,6 +55,11 @@ func (e *ephem) setup(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes, err
 	if fc != sbreq.FailCodeNone {
 		return sbalgo.EphemRes{FailCode: fc}, nil
 	}
+
+	if (stEntry.Expired(info.ExpTick.Time())){
+		return sbalgo.EphemRes{FailCode: sbreq.SteadyOutdated}, nil
+	}
+
 	if !p.Accepted {
 		res := e.checkBw(stEntry, info)
 		stEntry.ReportMissingBW(info.BwCls.Bps(), res.MaxBw.Bps())
@@ -91,11 +96,19 @@ func (e *ephem) setupTrans(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes
 	if fc != sbreq.FailCodeNone {
 		return sbalgo.EphemRes{FailCode: fc}, nil
 	}
+	if (stIngress.Expired(info.ExpTick.Time())){
+		return sbalgo.EphemRes{FailCode: sbreq.SteadyOutdated}, nil
+	}
+
 	stEgress, fc := e.checkSteady(steady.IDs[steady.CurrSteady+1],
 		steady.ActiveBlocks[steady.CurrSteady+1].Info, p)
 	if fc != sbreq.FailCodeNone {
 		return sbalgo.EphemRes{FailCode: fc}, nil
 	}
+	if (stEgress.Expired(info.ExpTick.Time())){
+		return sbalgo.EphemRes{FailCode: sbreq.SteadyOutdated}, nil
+	}
+
 	if !p.Accepted {
 		in := e.checkBw(stIngress, info)
 		eg := e.checkBw(stEgress, info)
@@ -151,7 +164,7 @@ func (e *ephem) setupTrans(steady *sbextn.Steady, p *sbreq.Pld) (sbalgo.EphemRes
 func (e *ephem) checkSteady(id sibra.ID, info *sbresv.Info, p *sbreq.Pld) (
 	*state.SteadyResvEntry, sbreq.FailCode) {
 
-	stEntry, ok := e.SteadyMap.Get(id)
+	stEntry, baseRes, ok := e.SteadyMap.GetBaseReservation(id)
 	if !ok {
 		return nil, sbreq.SteadyNotExists
 	}
@@ -164,6 +177,12 @@ func (e *ephem) checkSteady(id sibra.ID, info *sbresv.Info, p *sbreq.Pld) (
 	if !stEntry.Indexes[stEntry.ActiveIndex].Info.Eq(info) {
 		return nil, sbreq.SteadyOutdated
 	}
+
+	// In case this reservation is telescoped, we need to do accounting only on base reservation
+	if baseRes!=nil{
+		return baseRes, sbreq.FailCodeNone
+	}
+
 	return stEntry, sbreq.FailCodeNone
 }
 
@@ -235,6 +254,9 @@ func (e *ephem) renew(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemRes, e
 	if fc != sbreq.FailCodeNone {
 		return sbalgo.EphemRes{FailCode: fc}, nil
 	}
+	if (stEntry.Expired(info.ExpTick.Time())){
+		return sbalgo.EphemRes{FailCode: sbreq.SteadyOutdated}, nil
+	}
 	if !p.Accepted {
 		res := e.checkBw(stEntry, info)
 		stEntry.ReportMissingBW(info.BwCls.Bps(), res.MaxBw.Bps())
@@ -276,9 +298,15 @@ func (e *ephem) renewTrans(ephem *sbextn.Ephemeral, p *sbreq.Pld) (sbalgo.EphemR
 	if fc != sbreq.FailCodeNone {
 		return sbalgo.EphemRes{FailCode: fc}, nil
 	}
+	if (stIngress.Expired(info.ExpTick.Time())){
+		return sbalgo.EphemRes{FailCode: sbreq.SteadyOutdated}, nil
+	}
 	stEgress, fc := e.checkSteady(ephem.SteadyIds()[ephem.CurrSteady+1], nil, p)
 	if fc != sbreq.FailCodeNone {
 		return sbalgo.EphemRes{FailCode: fc}, nil
+	}
+	if (stEgress.Expired(info.ExpTick.Time())){
+		return sbalgo.EphemRes{FailCode: sbreq.SteadyOutdated}, nil
 	}
 	if !p.Accepted {
 		in := e.checkBw(stIngress, info)

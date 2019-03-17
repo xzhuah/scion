@@ -90,7 +90,8 @@ func (r *resolver) handle() (bool, error) {
 	}
 	// keep steady extension up-to-date
 	ext := entry.syncResv.Load().Steady
-	if ext == nil || ext.Expiry().Before(time.Now()) {
+	//  If there is not enough time for ephemeral reservation, steady reservations should be updated
+	if ext == nil || ext.Expiry().Before(time.Now().Add(sibra.MaxEphemTicks*sibra.TickDuration)) {
 		if quit, err := r.resolveSteady(entry, path); quit || err != nil {
 			return quit, err
 		}
