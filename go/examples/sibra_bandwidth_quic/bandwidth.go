@@ -313,7 +313,7 @@ func (c *client) run() {
 func showStatistics(sentData int, duration time.Duration){
 	fmt.Println(fmt.Sprintf("Done sending data. Total sent: %d time (s): %d",sentData, duration))
 	bps := sibra.Bps(float64(sentData)/duration.Seconds())
-	fmt.Println(fmt.Sprintf("Speed: %s", bps.String()))
+	fmt.Fprintf(os.Stderr, "Speed: %s", bps.String())
 }
 
 func (c *client) initResvMgr() {
