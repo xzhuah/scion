@@ -29,7 +29,7 @@ func (r *Router) FlowMonitoringCallback(info flowmonitor.FlowInfo, isLocalFlow b
 		result = r.localFlowMonitor.IsFlowRateExceeded(&info, true)
 	} else {
 		//result = r.transitFlowMonitor.IsFlowRateExceeded(&info)
-		return flowmonitor.BANDWIDTH_OK
+		result = flowmonitor.BANDWIDTH_OK
 	}
 
 	if result == flowmonitor.BANDWIDTH_BLACKLIST {
