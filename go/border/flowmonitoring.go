@@ -27,22 +27,23 @@ func (r *Router) FlowMonitoringCallback(info flowmonitor.FlowInfo, isLocalFlow b
 	var result flowmonitor.FlowMonitoringResult = flowmonitor.BANDWIDTH_OK
 	if isLocalFlow {
 		result = r.localFlowMonitor.IsFlowRateExceeded(&info, true)
-	}else{
-		result = r.transitFlowMonitor.IsFlowRateExceeded(&info)
+	} else {
+		//result = r.transitFlowMonitor.IsFlowRateExceeded(&info)
+		return flowmonitor.BANDWIDTH_OK
 	}
 
-	if result==flowmonitor.BANDWIDTH_BLACKLIST {
+	if result == flowmonitor.BANDWIDTH_BLACKLIST {
 		log.Info("Blacklisting flow", "sibra_id", info.ReservationId)
 		r.SIBRACallback(rpkt.SIBRAInternalPacket{
-			Payload:&sibra_mgmt.BandwidthExceeded{
-				Id:info.ReservationId,
-				RawOriginIA:info.SourceIA.IAInt(),
+			Payload: &sibra_mgmt.BandwidthExceeded{
+				Id:          info.ReservationId,
+				RawOriginIA: info.SourceIA.IAInt(),
 			},
 		})
 		return true
-	}else if result == flowmonitor.BANDWIDTH_EXCEEDED {
+	} else if result == flowmonitor.BANDWIDTH_EXCEEDED {
 		return true
-	}else{
+	} else {
 		return false
 	}
 }
