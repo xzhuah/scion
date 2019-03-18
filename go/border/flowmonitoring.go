@@ -24,6 +24,8 @@ import (
 // Used to verify if flow is exceeding reserved bandwidth
 // Returns true if flow has exceeded bandwidth and packet should be dropped
 func (r *Router) FlowMonitoringCallback(info flowmonitor.FlowInfo, isLocalFlow bool) bool {
+	return false //TODO: Remove, this is only for running benchmarks
+
 	var result flowmonitor.FlowMonitoringResult = flowmonitor.BANDWIDTH_OK
 	if isLocalFlow {
 		result = r.localFlowMonitor.IsFlowRateExceeded(&info, true)
