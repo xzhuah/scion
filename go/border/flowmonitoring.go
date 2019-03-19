@@ -19,6 +19,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/sibra_mgmt"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/sibra/flowmonitor"
+	"time"
 )
 
 // Used to verify if flow is exceeding reserved bandwidth
@@ -32,7 +33,7 @@ func (r *Router) FlowMonitoringCallback(info flowmonitor.FlowInfo, isLocalFlow b
 	}
 
 	if result == flowmonitor.BANDWIDTH_BLACKLIST {
-		log.Info("Blacklisting flow", "sibra_id", info.ReservationId)
+		log.Info("Blacklisting flow", "sibra_id", info.ReservationId, "detected_time", time.Now())
 		r.SIBRACallback(rpkt.SIBRAInternalPacket{
 			Payload: &sibra_mgmt.BandwidthExceeded{
 				Id:          info.ReservationId,

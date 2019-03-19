@@ -232,7 +232,7 @@ func (e *ephem) addEntry(steady *state.SteadyResvEntry, id sibra.ID,
 }
 
 func (e *ephem) AdmitEphemRenew(ephem *sbextn.Ephemeral, p *sbreq.Pld, srcIA addr.IA) (sbalgo.EphemRes, error) {
-	if e.IsBlacklisted(srcIA){
+	if e.CanRenew(ephem.IDs[0]){
 		log.Warn("Denying ephemeral reservation because it's blacklisted")
 		return sbalgo.EphemRes{FailCode: sbreq.ClientDenied},
 			nil
@@ -579,8 +579,11 @@ func (e *ephem) cleanEntry(ephemId, steadyId sibra.ID, failed,
 	return sbreq.FailCodeNone, err
 }
 
-func (e *ephem)Blacklist(ia addr.IA, duration time.Duration){
-	e.BlacklistedAS[ia.IAInt()]=time.Now().Add(duration)
+func (e *ephem)Blacklist(ia addr.IA, duration time.Duration, id sibra.ID){
+	//e.BlacklistedAS[ia.IAInt()]=time.Now().Add(duration)
+	var ephId [sibra.EphemIDLen]byte
+	copy(ephId[:], id)
+	e.BlacklistedFlow[ephId]=time.Now().Add(duration)
 }
 
 func (e *ephem)RemoveFromBlacklist(ia addr.IA){
@@ -589,5 +592,12 @@ func (e *ephem)RemoveFromBlacklist(ia addr.IA){
 
 func (e *ephem)IsBlacklisted(ia addr.IA) bool{
 	_, exists := e.BlacklistedAS[ia.IAInt()]
+	return exists
+}
+
+func (e *ephem)CanRenew(id sibra.ID) bool{
+	var ephId [sibra.EphemIDLen]byte
+	copy(ephId[:], id)
+	_, exists := e.BlacklistedFlow[ephId]
 	return exists
 }

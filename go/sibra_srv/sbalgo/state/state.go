@@ -48,6 +48,7 @@ type SibraState struct {
 	Topo *topology.Topo
 	// Blacklisted IAs
 	BlacklistedAS map[addr.IAInt] time.Time
+	BlacklistedFlow map[[sibra.EphemIDLen]byte] time.Time
 }
 
 func NewSibraState(topo *topology.Topo, mat Matrix) (*SibraState, error) {
