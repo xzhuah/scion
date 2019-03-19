@@ -264,7 +264,7 @@ func (c *client) run() {
 		droppedPacktes = c.sendDataConstantRate(uint64(packetNumber), uint64(pace), testId, uint64(*duration))
 	}
 	droppedPacktes += c.GetTestStatus(testId, rcvChannel)
-	c.DisplayResults(uint64(packetNumber), droppedPacktes, *duration)
+	c.DisplayResults(uint64(packetNumber), droppedPacktes, uint64(*duration))
 }
 
 func calculatePacketCount(bandwidth, seconds, packetSize uint) (uint64, time.Duration){
