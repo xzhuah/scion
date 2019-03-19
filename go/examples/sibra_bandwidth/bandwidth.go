@@ -413,7 +413,7 @@ func (c *client) DisplayResults(packetNumber, droppedPackets uint64, testDuratio
 	sentData := (packetNumber-droppedPackets)*(uint64)(*mtu)
 	bps := sibra.Bps(float64(sentData)/float64(testDuration))
 	fmt.Println(fmt.Sprintf("We sent: %d packets and dropped: %d packets. Drop rate: %f", packetNumber, droppedPackets, dropRate))
-	fmt.Fprintf(os.Stderr, "Speed: %s\n", bps.String())
+	fmt.Fprintf(os.Stderr, "Speed: %s drop rate: %f\n", bps.String(), dropRate)
 }
 
 func (c *client) initResvMgr() {
