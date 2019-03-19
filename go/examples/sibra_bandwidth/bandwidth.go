@@ -264,7 +264,7 @@ func (c *client) run() {
 		droppedPacktes = c.sendDataConstantRate(uint64(packetNumber), uint64(pace), testId, uint64(*duration))
 	}
 	droppedPacktes += c.GetTestStatus(testId, rcvChannel)
-	c.DisplayResults(uint64(packetNumber), droppedPacktes)
+	c.DisplayResults(uint64(packetNumber), droppedPacktes, testDuration)
 }
 
 func calculatePacketCount(bandwidth, seconds, packetSize uint) (uint64, time.Duration){
@@ -408,9 +408,12 @@ func (c *client) GetTestStatus(sessionId uint64, rcvChannel <-chan common.RawByt
 	return res.DroppedPackets
 }
 
-func (c *client) DisplayResults(packetNumber, droppedPackets uint64) {
+func (c *client) DisplayResults(packetNumber, droppedPackets uint64, testDuration time.Duration) {
 	dropRate := float64(droppedPackets * 100) / float64(packetNumber)
+	sentData := (packetNumber-droppedPackets)*(uint64)(*mtu)
+	bps := sibra.Bps(float64(sentData)/testDuration.Seconds())
 	fmt.Println(fmt.Sprintf("We sent: %d packets and dropped: %d packets. Drop rate: %f", packetNumber, droppedPackets, dropRate))
+	fmt.Fprintf(os.Stderr, "Speed: %s\n", bps.String())
 }
 
 func (c *client) initResvMgr() {
