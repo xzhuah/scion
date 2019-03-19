@@ -60,6 +60,7 @@ func NewSibraState(topo *topology.Topo, mat Matrix) (*SibraState, error) {
 		Delta:      0.6,
 		Topo:       topo,
 		BlacklistedAS: make(map[addr.IAInt]time.Time),
+		BlacklistedFlow: make(map[[sibra.EphemIDLen]byte] time.Time),
 	}
 	s.SteadyMap = NewSteadyResvMap(s)
 	// Set bandwidth for interface pairs
