@@ -89,10 +89,9 @@ type EphemAdm interface {
 }
 
 type ASBlacklist interface {
-	Blacklist(ia addr.IA, baseDuration time.Duration, reservationId sibra.ID)
+	Blacklist(ia addr.IA, baseDuration time.Duration)
 	IsBlacklisted(ia addr.IA) bool
 	RemoveFromBlacklist(ia addr.IA)
-	CanRenew(sibra.ID) bool
 }
 
 type SteadyRes struct {

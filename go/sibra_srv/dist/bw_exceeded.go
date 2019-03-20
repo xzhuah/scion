@@ -30,5 +30,5 @@ func (h *BWExceededReqHandler) Handle(r *infra.Request) {
 	conf:=conf.Get()
 	pld := r.Message.(*sibra_mgmt.BandwidthExceeded)
 	log.Debug("Blacklisted flow", "sibra_id", pld.Id)
-	conf.SibraAlgo.Blacklist(pld.RawOriginIA.IA(),time.Duration(1*time.Hour), pld.Id)
+	conf.SibraAlgo.Blacklist(pld.RawOriginIA.IA(),time.Duration(1*time.Hour))
 }

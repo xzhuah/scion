@@ -19,7 +19,7 @@ const (
 
 	SCALE_FACTOR uint64 = 1000000
 
-	SUSPICIOUS_FLOWS_PER_CYCLE = 1
+	SUSPICIOUS_FLOWS_PER_CYCLE = 2
 )
 
 type minorCycle struct {
