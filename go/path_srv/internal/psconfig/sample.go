@@ -38,7 +38,7 @@ const Sample = `[general]
     Level = "debug"
 
     # Max size of log file in MiB (default 50)
-    # Size = 50
+    Size = 50
 
     # Max age of log file in days (default 7)
     MaxAge = 7
