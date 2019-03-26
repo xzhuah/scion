@@ -77,8 +77,8 @@ func newMetrics(desc string, labels prometheus.Labels) *metrics {
 		readCalls:     ReadCalls.With(l),
 		writesBlocked: WritesBlocked.With(l),
 		readsBlocked:  ReadsBlocked.With(l),
-		writeEntries:  WriteEntries.With(l),
-		readEntries:   ReadEntries.With(l),
+		writeEntries:  WriteEntries.With(l).(prometheus.Histogram),
+		readEntries:   ReadEntries.With(l).(prometheus.Histogram),
 		maxEntries:    MaxEntries.With(l),
 		usedEntries:   UsedEntries.With(l),
 	}
