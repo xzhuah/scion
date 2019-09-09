@@ -70,6 +70,7 @@ func realMain() int {
 		err := RunDispatcher(
 			cfg.Dispatcher.DeleteSocket,
 			cfg.Dispatcher.ApplicationSocket,
+			os.FileMode(cfg.Dispatcher.SocketFileMode),
 			cfg.Dispatcher.OverlayPort,
 		)
 		if err != nil {
@@ -120,7 +121,9 @@ func setupBasic() error {
 	return env.LogAppStarted("Dispatcher", cfg.Dispatcher.ID)
 }
 
-func RunDispatcher(deleteSocketFlag bool, applicationSocket string, overlayPort int) error {
+func RunDispatcher(deleteSocketFlag bool, applicationSocket string, socketFileMode os.FileMode,
+	overlayPort int) error {
+
 	if deleteSocketFlag {
 		if err := deleteSocket(cfg.Dispatcher.ApplicationSocket); err != nil {
 			return err
@@ -130,6 +133,7 @@ func RunDispatcher(deleteSocketFlag bool, applicationSocket string, overlayPort 
 		RoutingTable:      network.NewIATable(1024, 65535),
 		OverlaySocket:     fmt.Sprintf(":%d", overlayPort),
 		ApplicationSocket: applicationSocket,
+		SocketFileMode:    socketFileMode,
 	}
 	log.Debug("Dispatcher starting", "appSocket", applicationSocket, "overlayPort", overlayPort)
 	return dispatcher.ListenAndServe()
