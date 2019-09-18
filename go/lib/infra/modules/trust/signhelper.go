@@ -226,6 +226,12 @@ func (v *BasicVerifier) verify(ctx context.Context, msg common.RawBytes,
 	if err := v.checkSrc(src); err != nil {
 		return err
 	}
+	topts := infra.TRCOpts{
+		TrustStoreOpts: infra.TrustStoreOpts{Server: v.server},
+	}
+	if _, err := v.store.GetTRC(ctx, src.IA.I, scrypto.Version(src.TRCVer), topts); err != nil {
+		return err
+	}
 	opts := infra.ChainOpts{
 		TrustStoreOpts: infra.TrustStoreOpts{Server: v.server},
 	}
