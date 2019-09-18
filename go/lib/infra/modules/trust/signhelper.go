@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl"
 	"github.com/scionproto/scion/go/lib/ctrl/cert_mgmt"
 	"github.com/scionproto/scion/go/lib/infra"
+	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/proto"
@@ -226,12 +227,20 @@ func (v *BasicVerifier) verify(ctx context.Context, msg common.RawBytes,
 	if err := v.checkSrc(src); err != nil {
 		return err
 	}
+	logger := log.FromCtx(ctx)
+	logger.Debug("[kmateusz] YO MAN 1")
 	topts := infra.TRCOpts{
 		TrustStoreOpts: infra.TrustStoreOpts{Server: v.server},
 	}
-	if _, err := v.store.GetTRC(ctx, src.IA.I, scrypto.Version(src.TRCVer), topts); err != nil {
+	logger.Debug("[kmateusz] YO MAN 2")
+	logger.Debug("[kmateusz] ", "src", src)
+	_, err = v.store.GetTRC(ctx, src.IA.I, scrypto.Version(src.TRCVer), topts)
+
+	if err != nil {
+		logger.Debug("[kmateusz] YO MAN ERROR 1")
 		return err
 	}
+	logger.Debug("[kmateusz] YO MAN 3")
 	opts := infra.ChainOpts{
 		TrustStoreOpts: infra.TrustStoreOpts{Server: v.server},
 	}
