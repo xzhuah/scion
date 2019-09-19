@@ -228,19 +228,13 @@ func (v *BasicVerifier) verify(ctx context.Context, msg common.RawBytes,
 		return err
 	}
 	logger := log.FromCtx(ctx)
-	logger.Debug("[kmateusz] YO MAN 1")
 	topts := infra.TRCOpts{
 		TrustStoreOpts: infra.TrustStoreOpts{Server: v.server},
 	}
-	logger.Debug("[kmateusz] YO MAN 2")
-	logger.Debug("[kmateusz] ", "src", src)
-	_, err = v.store.GetTRC(ctx, src.IA.I, scrypto.Version(src.TRCVer), topts)
-
-	if err != nil {
-		logger.Debug("[kmateusz] YO MAN ERROR 1")
+	logger.Debug("[TrustStore:BasicVerifier] Verifying", "src", src)
+	if _, err = v.store.GetTRC(ctx, src.IA.I, scrypto.Version(src.TRCVer), topts); err != nil {
 		return err
 	}
-	logger.Debug("[kmateusz] YO MAN 3")
 	opts := infra.ChainOpts{
 		TrustStoreOpts: infra.TrustStoreOpts{Server: v.server},
 	}

@@ -207,11 +207,9 @@ func verifySegment(ctx context.Context, verifier infra.Verifier, server net.Addr
 func VerifySegment(ctx context.Context, verifier infra.Verifier, server net.Addr,
 	segment *seg.PathSegment) error {
 
-	log.Debug("[juagargi] VerifySegment", "segment", segment)
 	for i, asEntry := range segment.ASEntries {
 		// Bind the verifier to the values specified in the AS Entry since
 		// the sign meta does not carry this information.
-		log.Debug("[juagargi] VerifySegment, inside loop", "asEntry", asEntry)
 		verifier := verifier.WithServer(server).WithSrc(ctrl.SignSrcDef{
 			IA:       asEntry.IA(),
 			ChainVer: asEntry.CertVer,
