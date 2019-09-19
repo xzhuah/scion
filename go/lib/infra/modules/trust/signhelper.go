@@ -227,11 +227,9 @@ func (v *BasicVerifier) verify(ctx context.Context, msg common.RawBytes,
 	if err := v.checkSrc(src); err != nil {
 		return err
 	}
-	logger := log.FromCtx(ctx)
 	topts := infra.TRCOpts{
 		TrustStoreOpts: infra.TrustStoreOpts{Server: v.server},
 	}
-	logger.Debug("[TrustStore:BasicVerifier] Verifying", "src", src)
 	if _, err = v.store.GetTRC(ctx, src.IA.I, scrypto.Version(src.TRCVer), topts); err != nil {
 		return err
 	}
