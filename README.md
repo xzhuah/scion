@@ -72,13 +72,9 @@ Necessary steps in order to run SCION:
    ```bash
    mkdir -p "$GOPATH/src/github.com/scionproto"
    cd "$GOPATH/src/github.com/scionproto"
-   git clone --recursive git@github.com:netsec-ethz/netsec-scion scion
+   git clone https://github.com/netsec-ethz/netsec-scion
    cd scion
    ```
-
-   If you don't have a github account, or haven't setup ssh access to it, this
-   command will make git use https instead:
-   `git config --global url.https://github.com/.insteadOf git@github.com:`
 
 1. Install required packages with dependencies:
 
