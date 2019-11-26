@@ -65,7 +65,7 @@ Necessary steps in order to run SCION:
    ```bash
    mkdir -p "$GOPATH/src/github.com/scionproto"
    cd "$GOPATH/src/github.com/scionproto"
-   git clone https://github.com/netsec-ethz/netsec-scion
+   git clone https://github.com/netsec-ethz/scion
    cd scion
    ```
 
