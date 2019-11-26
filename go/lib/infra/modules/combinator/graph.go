@@ -183,6 +183,22 @@ func (g *DMG) GetPaths(src, dst Vertex) PathSolutionList {
 				if !validNextSeg(currentPathSolution.currentSeg, segment) {
 					continue
 				}
+
+				// Create a list of unique ISDs traversed in a segment. Reuse the loop
+				// to calculate also a number of hops in foreign ISDs.
+				foreignHops := 0
+				check := make(map[addr.ISD]int)
+				for _, val := range segment.ASEntries {
+					check[val.IA().I] = 1
+					if val.IA().I != src.IA.I {
+						foreignHops = foreignHops + 1
+					}
+				}
+				uniqueISD := make([]addr.ISD, 0)
+				for key, _ := range check {
+					uniqueISD = append(uniqueISD, key)
+				}
+
 				// Create a copy of the old solution s.t. trail slices do not
 				// get mixed during appends.
 				newSolution := &PathSolution{
@@ -190,6 +206,8 @@ func (g *DMG) GetPaths(src, dst Vertex) PathSolutionList {
 					currentVertex: nextVertex,
 					currentSeg:    segment,
 					cost:          currentPathSolution.cost + edge.Weight,
+					costIsd:       currentPathSolution.costIsd + len(uniqueISD),
+					costForeign:   currentPathSolution.costForeign + foreignHops,
 				}
 
 				// Append the explored edge to the solution, and add it to the
@@ -268,6 +286,10 @@ type PathSolution struct {
 	currentSeg *InputSegment
 	// cost is the sum of edge weights
 	cost int
+	// costIsd is the sum of ISDs traversed
+	costIsd int
+	// costForeign is the number of hops in foreign ISDs
+	costForeign int
 }
 
 // GetFwdPathMetadata builds the complete metadata for a forwarding path by
@@ -372,12 +394,22 @@ func (sl PathSolutionList) Len() int {
 }
 
 // Less sorts according to the following priority list:
+//  - number of hops in foreign ISDs
+//  - total number of ISDs traversed
 //  - total path cost (number of hops)
 //  - number of segments
 //  - segmentIDs
 //  - shortcut index
 //  - peer entry index
 func (sl PathSolutionList) Less(i, j int) bool {
+	if sl[i].costForeign != sl[j].costForeign {
+		return sl[i].costForeign < sl[j].costForeign
+	}
+
+	if sl[i].costIsd != sl[j].costIsd {
+		return sl[i].costIsd < sl[j].costIsd
+	}
+
 	if sl[i].cost != sl[j].cost {
 		return sl[i].cost < sl[j].cost
 	}
