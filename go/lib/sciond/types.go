@@ -26,6 +26,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/drkey_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/hostinfo"
+	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/proto"
 )
@@ -231,6 +232,31 @@ func (fpm *FwdPathMeta) Copy() *FwdPathMeta {
 func (fpm *FwdPathMeta) String() string {
 	hops := fpm.fmtIfaces()
 	return fmt.Sprintf("Hops: [%s] Mtu: %d", strings.Join(hops, ">"), fpm.Mtu)
+}
+
+// PrintSegments parses and prints fpm's segments information.
+func (fpm *FwdPathMeta) PrintSegments() error {
+	size := len(fpm.FwdPath)
+
+	for off, seg := 0, 0; off+spath.InfoFieldLength <= size; seg++ {
+		info, err := spath.InfoFFromRaw(fpm.FwdPath[off : off+spath.InfoFieldLength])
+		if err != nil {
+			return fmt.Errorf("Parse info field failed | err=[%w]", err)
+		}
+		off += spath.InfoFieldLength
+
+		fmt.Printf("[Segment %d]\n", seg)
+		for j := uint8(0); j < info.Hops && off+spath.HopFieldLength <= size; j++ {
+			hop, err := spath.HopFFromRaw(fpm.FwdPath[off : off+spath.HopFieldLength])
+			if err != nil {
+				return fmt.Errorf("Parse hop field failed | err=[%w]", err)
+			}
+			off += spath.HopFieldLength
+			fmt.Printf("HopField %d: %s\n", j, hop)
+		}
+	}
+
+	return nil
 }
 
 func (fpm *FwdPathMeta) fmtIfaces() []string {
