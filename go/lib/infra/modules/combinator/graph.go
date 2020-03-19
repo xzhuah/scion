@@ -285,6 +285,10 @@ func (solution *PathSolution) GetFwdPathMetadata() *Path {
 		currentSeg.InfoField.ConsDir = solEdge.segment.IsDownSeg()
 		currentSeg.InfoField.Shortcut = solEdge.edge.Shortcut != 0
 		currentSeg.InfoField.Peer = solEdge.edge.Peer != 0
+
+		currentSeg.Exts = append(currentSeg.Exts, 1)
+		currentSeg.Exts = append(currentSeg.Exts, 1)
+
 		path.Segments = append(path.Segments, currentSeg)
 
 		// Go through each ASEntry, starting from the last one, until we

@@ -137,6 +137,7 @@ type Segment struct {
 	HopFields  []*HopField
 	Type       proto.PathSegType
 	Interfaces []sciond.PathInterface
+	Exts	   []int32
 }
 
 // initInfoFieldFrom copies the info field in pathSegment, and sets it as the
