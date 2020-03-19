@@ -25,6 +25,7 @@
 package combinator
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	"time"
@@ -128,6 +129,17 @@ func (p *Path) WriteTo(w io.Writer) (int64, error) {
 				return total, err
 			}
 		}
+		for _, int_value := range segment.Exts {
+
+			bs := make([]byte, 4)
+			binary.LittleEndian.PutUint32(bs, int_value)
+			fmt.Println(bs)
+			n, err := w.Write(bs)
+			total += int64(n)
+			if err != nil {
+				return total, err
+			}
+		}
 	}
 	return total, nil
 }
@@ -137,7 +149,7 @@ type Segment struct {
 	HopFields  []*HopField
 	Type       proto.PathSegType
 	Interfaces []sciond.PathInterface
-	Exts	   []int32
+	Exts	   []uint32
 }
 
 // initInfoFieldFrom copies the info field in pathSegment, and sets it as the
