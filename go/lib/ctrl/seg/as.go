@@ -34,9 +34,9 @@ type ASEntry struct {
 	HopEntries []*HopEntry `capnp:"hops"`
 	MTU        uint16      `capnp:"mtu"`
 	Exts       struct {
-		RoutingPolicy  common.RawBytes    `capnp:"-"` // Not supported yet
-		Sibra          common.RawBytes    `capnp:"-"` // Not supported yet
-		WatchDogMetric WatchDogMetricExtn `capnp:"watchDogMetric"`
+		RoutingPolicy  common.RawBytes     `capnp:"-"` // Not supported yet
+		Sibra          common.RawBytes     `capnp:"-"` // Not supported yet
+		WatchDogMetric *WatchDogMetricExtn `capnp:"watchDogMetric"`
 	}
 }
 
