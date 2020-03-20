@@ -9,12 +9,12 @@ import (
 var _ proto.Cerealizable = (*WatchDogMetricExtn)(nil)
 
 type WatchDogMetricExtn struct {
-	Set   bool
-	Value uint32
+	Set bool
+	Val uint32
 }
 
 func NewWatchDogMetricExtn() *WatchDogMetricExtn {
-	return &WatchDogMetricExtn{Set: true, Value: 32}
+	return &WatchDogMetricExtn{Set: true, Val: 32}
 }
 
 func (wdExt *WatchDogMetricExtn) ProtoId() proto.ProtoIdType {

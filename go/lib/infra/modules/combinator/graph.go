@@ -287,7 +287,7 @@ func (solution *PathSolution) GetFwdPathMetadata() *Path {
 		currentSeg.InfoField.Peer = solEdge.edge.Peer != 0
 
 		if solEdge.segment.ASEntries[0].Exts.WatchDogMetric != nil {
-			currentSeg.Exts = solEdge.segment.ASEntries[0].Exts.WatchDogMetric.Value
+			currentSeg.Exts = solEdge.segment.ASEntries[0].Exts.WatchDogMetric.Val
 		}
 
 		path.Segments = append(path.Segments, currentSeg)
