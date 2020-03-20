@@ -173,28 +173,105 @@ func (p ISDAnnouncementExt_Promise) Struct() (ISDAnnouncementExt, error) {
 	return ISDAnnouncementExt{s}, err
 }
 
-const schema_e6c88f91b6a1209e = "x\xdal\xce\xb1J\xf3P\x18\xc6\xf1\xe79'm\xda" +
-	"\xe1k{\xbe\xe6\x02\xc4QT\x10\x11T\x10\xad\xb4C" +
-	"\x07\xa1G\x1d\x05\x0d\xed\xd1\x06\xda$\x90T\xd2\xa9\x08" +
-	"\xe2*.\x8eBoB]\x1d\x14\xaf\xc1Y\xf4\x1a\x9c" +
-	"\"\xc7A\x11\\\x1f\xfe/\xef\xafv\xba%T\xe1\x0e" +
-	"\xd0\xa5B1\xffx]Y\xbd\x7fy\xb8\x86\xaeR\xe4" +
-	"73\xd3\xdb\xab\xcb\xe77\x14\xe8\x02K\x0dA\xb5\xe3" +
-	"\x02\xaa\xfd\x0e\xe6\xd3\xa7\xf9\xb3\x8a\xb9x\xb4)\x7fR" +
-	"\xc7\x05\x96\x17\xf8\x9f\xf5\x0d{T_\xe3&\x98\xfb\xc9" +
-	"\xf0\xd0di\"\x17\xbb~\x1c\xc6\xeb\xbb\xd1(\x0d\xc2" +
-	"\x93N4\x08\xba\xe3V\x96\xa2C\xea\x9at\x00\x87\x80" +
-	"\xf2g\x01} \xa9\xfb\x82\x8a\xf4hG\xb3\x0d\xe8#" +
-	"I=\x10T\x82\x1e\x05\xa0\x829@\xf7$u,H" +
-	"\xe9Q\x02jh\xc3\xbe\xa4>\x17t\x13\x93\x92\x10$" +
-	"8\x89\xa3\xc1\xfe86,B\xb0\x08V\x83\xe3v\x93" +
-	"e\x08\x96\xc1I\x90\xf4\xfc\xc4$\xac\x80\x1d\xc9\xaf\xb9" +
-	"\xf2\x87\xbc\xbd\xd7l\x84a4\x0a\xbbfh\xc2\xb4\x95" +
-	"1\xb5v\xe7\xdb\xfe\xcf\xdaK\x92\xda\xfb\xfd\xfd3\x00" +
-	"\x00\xff\xffm\xabO\x82"
+type WatchDogMetricExt struct{ capnp.Struct }
+
+// WatchDogMetricExt_TypeID is the unique identifier for the type WatchDogMetricExt.
+const WatchDogMetricExt_TypeID = 0xec40e340d3b20459
+
+func NewWatchDogMetricExt(s *capnp.Segment) (WatchDogMetricExt, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return WatchDogMetricExt{st}, err
+}
+
+func NewRootWatchDogMetricExt(s *capnp.Segment) (WatchDogMetricExt, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	return WatchDogMetricExt{st}, err
+}
+
+func ReadRootWatchDogMetricExt(msg *capnp.Message) (WatchDogMetricExt, error) {
+	root, err := msg.RootPtr()
+	return WatchDogMetricExt{root.Struct()}, err
+}
+
+func (s WatchDogMetricExt) String() string {
+	str, _ := text.Marshal(0xec40e340d3b20459, s.Struct)
+	return str
+}
+
+func (s WatchDogMetricExt) Set() bool {
+	return s.Struct.Bit(0)
+}
+
+func (s WatchDogMetricExt) SetSet(v bool) {
+	s.Struct.SetBit(0, v)
+}
+
+func (s WatchDogMetricExt) Val() uint32 {
+	return s.Struct.Uint32(4)
+}
+
+func (s WatchDogMetricExt) SetVal(v uint32) {
+	s.Struct.SetUint32(4, v)
+}
+
+// WatchDogMetricExt_List is a list of WatchDogMetricExt.
+type WatchDogMetricExt_List struct{ capnp.List }
+
+// NewWatchDogMetricExt creates a new list of WatchDogMetricExt.
+func NewWatchDogMetricExt_List(s *capnp.Segment, sz int32) (WatchDogMetricExt_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
+	return WatchDogMetricExt_List{l}, err
+}
+
+func (s WatchDogMetricExt_List) At(i int) WatchDogMetricExt {
+	return WatchDogMetricExt{s.List.Struct(i)}
+}
+
+func (s WatchDogMetricExt_List) Set(i int, v WatchDogMetricExt) error {
+	return s.List.SetStruct(i, v.Struct)
+}
+
+func (s WatchDogMetricExt_List) String() string {
+	str, _ := text.MarshalList(0xec40e340d3b20459, s.List)
+	return str
+}
+
+// WatchDogMetricExt_Promise is a wrapper for a WatchDogMetricExt promised by a client call.
+type WatchDogMetricExt_Promise struct{ *capnp.Pipeline }
+
+func (p WatchDogMetricExt_Promise) Struct() (WatchDogMetricExt, error) {
+	s, err := p.Pipeline.Struct()
+	return WatchDogMetricExt{s}, err
+}
+
+const schema_e6c88f91b6a1209e = "x\xdal\x90?\xeb\xd3P\x18\x85\xcf\xb97m\xf2\x13" +
+	"m\x1b\x9b\x0f \xe2\xa0\xa2bQA\\\xac\xd2\x0e\x1d" +
+	"\x84^\x15\xa4 hH\xafm \xff0\xb7\xdaNE" +
+	"PW\xe9\xa0\xa3\xd0\xc5\x0f\xe0 \xae\x0e\x8a\xbb\x9b\xab" +
+	"\xa2\x8b_\xc0)r;T\x8b]\x0f\xcf{\xde\x87\xd3" +
+	"z\xd3\x15\x9dZ\x93\x80:\\\xabW\xbf\xbf_\xba\xfc" +
+	"\xfe\xeb\x87WPM\x8a\xea\xf5\xb1\xf5\xbb\xd5\x8b\xcf?" +
+	"P\xa3\x0btRA\x7f\xe1\x02\xfe\xec'X\xad?\x9d" +
+	"y\xd2\xd0\xcf?Z\x94\x7fQ\xc7\x05.\x8cx\x94\xed" +
+	"\xd8\x1e\xb55\xaf\x82\xd5\xc8y\xfb\xa5\xfb\xad\xfbk\x1f" +
+	"\xfc\x8c\x87\xd8~\xb9\x81W|\x0cVa\x99\xde\xd3s" +
+	"S\xcasQXd\xc5\x95\x9b\xf9\xcc\xc4\xd9d\x98'" +
+	"q\xb4\xe8\xcf\x0d\x86\xa4jI\x07p\x08\xf8\xe1q@" +
+	"\xdd\x95TSA\x9f\x0chC}\x1dP\xf7%U\"" +
+	"\xe8\x0b\x06\x14\x80\x1f\x9f\x06\xd4XR\x15\x82\x94\x01%" +
+	"\xe0\xa7\x16\x9cJ\xaa\xa7\x82n\xa9\x0d\x09A\x82\xcb\"" +
+	"On/\x0a\xcd:\x04\xeb`3~0\xe8\xf1\x00\x82" +
+	"\x07\xe02.\xc7a\xa9K6\xc0\xa1\xe4&n\xec1" +
+	"\x1f\xdc\xea]\xcb\xb2|\x96E:\xd5\x99\xe9\xcfi\xac" +
+	"\xbb\xb3u?b\xdd=I\x15\xec~\xff\xaf\xe9Nh" +
+	"\xa2i/\x9f\xdc\xd0\xe6a\x1c\xd9\x116+x\xdb\xa6" +
+	"S\xb6\xe9\x84\xa4:\xff\xcf\x0agmxRR]\xdc" +
+	"\xadw\x1f\x85\x09=\x08z\xe0\x9f\x00\x00\x00\xff\xffW" +
+	"\xb6r$"
 
 func init() {
 	schemas.Register(schema_e6c88f91b6a1209e,
 		0x96c1dab83835e4f9,
-		0xc586650e812cc6a1)
+		0xc586650e812cc6a1,
+		0xec40e340d3b20459)
 }

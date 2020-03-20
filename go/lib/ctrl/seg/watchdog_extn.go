@@ -6,22 +6,22 @@ import (
 	"github.com/scionproto/scion/go/proto"
 )
 
-var _ proto.Cerealizable = (*WatchDog)(nil)
+var _ proto.Cerealizable = (*WatchDogMetricExtn)(nil)
 
-type WatchDog struct {
+type WatchDogMetricExtn struct {
 	Set   bool
 	Value uint32
 }
 
-func NewWatchDog() *WatchDog {
-	return &WatchDog{Set: true, Value: 32}
+func NewWatchDog() *WatchDogMetricExtn {
+	return &WatchDogMetricExtn{Set: true, Value: 32}
 }
 
-func (wdExt *WatchDog) ProtoId() proto.ProtoIdType {
+func (wdExt *WatchDogMetricExtn) ProtoId() proto.ProtoIdType {
 	return proto.WatchDogMetricExt_TypeID
 }
 
-func (wdExt *WatchDog) String() string {
+func (wdExt *WatchDogMetricExtn) String() string {
 	if wdExt == nil {
 		return fmt.Sprintf("%v", false)
 	}

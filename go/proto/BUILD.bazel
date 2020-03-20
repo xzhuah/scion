@@ -26,7 +26,6 @@ go_library(
         "sig.capnp.go",
         "sign.capnp.go",
         "svc_resolution.capnp.go",
-        "watchdog.capnp.go",
         "zkid.capnp.go",
     ],
     importpath = "github.com/scionproto/scion/go/proto",
