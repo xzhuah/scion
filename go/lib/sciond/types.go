@@ -16,6 +16,7 @@
 package sciond
 
 import (
+	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
@@ -254,6 +255,11 @@ func (fpm *FwdPathMeta) PrintSegments() error {
 			off += spath.HopFieldLength
 			fmt.Printf("HopField %d: %s\n", j, hop)
 		}
+
+		// parse uint32
+		val := binary.LittleEndian.Uint32(fpm.FwdPath[off : off+4])
+		fmt.Printf("Value: %d\n", val)
+		off += 4
 	}
 
 	return nil
