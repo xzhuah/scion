@@ -13,3 +13,8 @@ struct RoutingPolicyExt{
 struct ISDAnnouncementExt{
     set @0 :Bool;   # TODO(Sezer): Implement announcement extension
 }
+
+struct WatchDogMetricExt{
+    set @0 :Bool;
+    val @1 :UInt32;
+}

@@ -28,6 +28,7 @@ struct ASEntry {
     exts :group {
         routingPolicy @6 :Exts.RoutingPolicyExt;
         sibra @7 :Sibra.SibraPCBExt;
+        watchDogMetric @8 :Exts.WatchDogMetricExt;
     }
 }
 
