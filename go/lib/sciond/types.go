@@ -258,11 +258,7 @@ func (fpm *FwdPathMeta) PrintSegments() error {
 
 		// parse uint32
 		val := binary.LittleEndian.Uint32(fpm.FwdPath[off : off+4])
-		fmt.Printf("Value1: %d\n", val)
-		off += 4
-
-		val = binary.LittleEndian.Uint32(fpm.FwdPath[off : off+4])
-		fmt.Printf("Value2: %d\n", val)
+		fmt.Printf("Value: %d\n", val)
 		off += 4
 	}
 
