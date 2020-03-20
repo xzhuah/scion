@@ -72,6 +72,11 @@ func (s *segExtender) extend(pseg *seg.PathSegment, inIfid, egIfid common.IFIDTy
 		IfIDSize:   s.cfg.IfidSize,
 		MTU:        s.cfg.MTU,
 		HopEntries: hopEntries,
+		Exts: struct {
+			RoutingPolicy  common.RawBytes         `capnp:"-"` // Not supported yet
+			Sibra          common.RawBytes         `capnp:"-"` // Not supported yet
+			WatchDogMetric *seg.WatchDogMetricExtn `capnp:"watchDogMetric"`
+		}{},
 	}
 	asEntry.Exts.WatchDogMetric = seg.NewWatchDogMetricExtn()
 	if err := pseg.AddASEntry(asEntry, s.cfg.Signer); err != nil {
