@@ -13,7 +13,7 @@ type WatchDogMetricExtn struct {
 	Value uint32
 }
 
-func NewWatchDog() *WatchDogMetricExtn {
+func NewWatchDogMetricExtn() *WatchDogMetricExtn {
 	return &WatchDogMetricExtn{Set: true, Value: 32}
 }
 

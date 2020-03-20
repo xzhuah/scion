@@ -73,6 +73,7 @@ func (s *segExtender) extend(pseg *seg.PathSegment, inIfid, egIfid common.IFIDTy
 		MTU:        s.cfg.MTU,
 		HopEntries: hopEntries,
 	}
+	asEntry.Exts.WatchDogMetric = seg.NewWatchDogMetricExtn()
 	if err := pseg.AddASEntry(asEntry, s.cfg.Signer); err != nil {
 		return err
 	}
