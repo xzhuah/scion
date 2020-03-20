@@ -36,7 +36,7 @@ type ASEntry struct {
 	Exts       struct {
 		RoutingPolicy common.RawBytes `capnp:"-"` // Not supported yet
 		Sibra         common.RawBytes `capnp:"-"` // Not supported yet
-		Watchdog      WatchDog
+		Watchdog      WatchDog        `capnp:"watchdog"`
 	}
 }
 
