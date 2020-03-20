@@ -9,12 +9,12 @@ import (
 var _ proto.Cerealizable = (*WatchDogMetricExtn)(nil)
 
 type WatchDogMetricExtn struct {
-	Set   bool
-	Value uint32
+	Set bool
+	Val uint32
 }
 
-func NewWatchDog() *WatchDogMetricExtn {
-	return &WatchDogMetricExtn{Set: true, Value: 32}
+func NewWatchDogMetricExtn() *WatchDogMetricExtn {
+	return &WatchDogMetricExtn{Set: true, Val: 32}
 }
 
 func (wdExt *WatchDogMetricExtn) ProtoId() proto.ProtoIdType {
@@ -25,5 +25,5 @@ func (wdExt *WatchDogMetricExtn) String() string {
 	if wdExt == nil {
 		return fmt.Sprintf("%v", false)
 	}
-	return fmt.Sprintf("%v%d", wdExt.Set, wdExt.Value)
+	return fmt.Sprintf("%v%d", wdExt.Set, wdExt.Val)
 }
