@@ -72,3 +72,5 @@ tags
 
 # bazel artifacts
 /bazel-*
+.idea
+go/.idea
