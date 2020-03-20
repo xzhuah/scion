@@ -25,5 +25,5 @@ func (wdExt *WatchDogMetricExtn) String() string {
 	if wdExt == nil {
 		return fmt.Sprintf("%v", false)
 	}
-	return fmt.Sprintf("%v%d", wdExt.Set, wdExt.Value)
+	return fmt.Sprintf("%v%d", wdExt.Set, wdExt.Val)
 }
