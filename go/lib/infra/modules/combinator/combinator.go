@@ -116,6 +116,7 @@ func (p *Path) ComputeExpTime() time.Time {
 
 func (p *Path) WriteTo(w io.Writer) (int64, error) {
 	var total int64
+	var bs []byte
 	for _, segment := range p.Segments {
 		n, err := segment.InfoField.WriteTo(w)
 		total += n
@@ -129,17 +130,33 @@ func (p *Path) WriteTo(w io.Writer) (int64, error) {
 				return total, err
 			}
 		}
-		for _, int_value := range segment.Exts {
 
-			bs := make([]byte, 4)
-			binary.LittleEndian.PutUint32(bs, int_value)
-			fmt.Println(bs)
-			n, err := w.Write(bs)
-			total += int64(n)
-			if err != nil {
-				return total, err
-			}
+		//for _, watchDog := range segment.Exts {
+		//	b := make(common.RawBytes, HopFieldLength)
+		//	h.Write(b)
+		//	return b
+		//}
+
+		bs = make([]byte, 4)
+		binary.LittleEndian.PutUint32(bs, segment.Exts)
+		// fmt.Println(bs)
+		nn, err := w.Write(bs)
+		total += int64(nn)
+		if err != nil {
+			return total, err
 		}
+
+		//for _, int_value := range segment.Exts {
+		//
+		//	bs := make([]byte, 4)
+		//	binary.LittleEndian.PutUint32(bs, int_value)
+		//	fmt.Println(bs)
+		//	n, err := w.Write(bs)
+		//	total += int64(n)
+		//	if err != nil {
+		//		return total, err
+		//	}
+		//}
 	}
 	return total, nil
 }
@@ -149,7 +166,7 @@ type Segment struct {
 	HopFields  []*HopField
 	Type       proto.PathSegType
 	Interfaces []sciond.PathInterface
-	Exts	   []uint32
+	Exts       uint32
 }
 
 // initInfoFieldFrom copies the info field in pathSegment, and sets it as the
