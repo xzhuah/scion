@@ -14,7 +14,18 @@ struct ISDAnnouncementExt{
     set @0 :Bool;   # TODO(Sezer): Implement announcement extension
 }
 
+struct BwCluster {
+    clusterBW @0 :UInt32;
+    interfaces @1 :List(UInt16);
+}
+
+struct BwInfo {
+    bwClusters @0 :List(BwCluster);
+    egressBW @1 :UInt32;
+    inToOutBW @2 :UInt32;
+}
+
 struct WatchDogMetricExt{
     set @0 :Bool;
-    val @1 :UInt32;
+    bwInfo @1 :BwInfo;
 }

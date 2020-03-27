@@ -117,7 +117,7 @@ func (p *Path) ComputeExpTime() time.Time {
 
 func (p *Path) WriteTo(w io.Writer) (int64, error) {
 	var total int64
-	var bs []byte
+	// var bs []byte
 	for _, segment := range p.Segments {
 		n, err := segment.InfoField.WriteTo(w)
 		total += n
