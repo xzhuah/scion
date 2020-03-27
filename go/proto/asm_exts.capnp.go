@@ -173,18 +173,194 @@ func (p ISDAnnouncementExt_Promise) Struct() (ISDAnnouncementExt, error) {
 	return ISDAnnouncementExt{s}, err
 }
 
+type BwCluster struct{ capnp.Struct }
+
+// BwCluster_TypeID is the unique identifier for the type BwCluster.
+const BwCluster_TypeID = 0x8947113f23a9ab50
+
+func NewBwCluster(s *capnp.Segment) (BwCluster, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return BwCluster{st}, err
+}
+
+func NewRootBwCluster(s *capnp.Segment) (BwCluster, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return BwCluster{st}, err
+}
+
+func ReadRootBwCluster(msg *capnp.Message) (BwCluster, error) {
+	root, err := msg.RootPtr()
+	return BwCluster{root.Struct()}, err
+}
+
+func (s BwCluster) String() string {
+	str, _ := text.Marshal(0x8947113f23a9ab50, s.Struct)
+	return str
+}
+
+func (s BwCluster) ClusterBW() uint32 {
+	return s.Struct.Uint32(0)
+}
+
+func (s BwCluster) SetClusterBW(v uint32) {
+	s.Struct.SetUint32(0, v)
+}
+
+func (s BwCluster) Interfaces() (capnp.UInt16List, error) {
+	p, err := s.Struct.Ptr(0)
+	return capnp.UInt16List{List: p.List()}, err
+}
+
+func (s BwCluster) HasInterfaces() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s BwCluster) SetInterfaces(v capnp.UInt16List) error {
+	return s.Struct.SetPtr(0, v.List.ToPtr())
+}
+
+// NewInterfaces sets the interfaces field to a newly
+// allocated capnp.UInt16List, preferring placement in s's segment.
+func (s BwCluster) NewInterfaces(n int32) (capnp.UInt16List, error) {
+	l, err := capnp.NewUInt16List(s.Struct.Segment(), n)
+	if err != nil {
+		return capnp.UInt16List{}, err
+	}
+	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	return l, err
+}
+
+// BwCluster_List is a list of BwCluster.
+type BwCluster_List struct{ capnp.List }
+
+// NewBwCluster creates a new list of BwCluster.
+func NewBwCluster_List(s *capnp.Segment, sz int32) (BwCluster_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
+	return BwCluster_List{l}, err
+}
+
+func (s BwCluster_List) At(i int) BwCluster { return BwCluster{s.List.Struct(i)} }
+
+func (s BwCluster_List) Set(i int, v BwCluster) error { return s.List.SetStruct(i, v.Struct) }
+
+func (s BwCluster_List) String() string {
+	str, _ := text.MarshalList(0x8947113f23a9ab50, s.List)
+	return str
+}
+
+// BwCluster_Promise is a wrapper for a BwCluster promised by a client call.
+type BwCluster_Promise struct{ *capnp.Pipeline }
+
+func (p BwCluster_Promise) Struct() (BwCluster, error) {
+	s, err := p.Pipeline.Struct()
+	return BwCluster{s}, err
+}
+
+type BwInfo struct{ capnp.Struct }
+
+// BwInfo_TypeID is the unique identifier for the type BwInfo.
+const BwInfo_TypeID = 0xe8339f855b7b98a8
+
+func NewBwInfo(s *capnp.Segment) (BwInfo, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return BwInfo{st}, err
+}
+
+func NewRootBwInfo(s *capnp.Segment) (BwInfo, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	return BwInfo{st}, err
+}
+
+func ReadRootBwInfo(msg *capnp.Message) (BwInfo, error) {
+	root, err := msg.RootPtr()
+	return BwInfo{root.Struct()}, err
+}
+
+func (s BwInfo) String() string {
+	str, _ := text.Marshal(0xe8339f855b7b98a8, s.Struct)
+	return str
+}
+
+func (s BwInfo) BwClusters() (BwCluster_List, error) {
+	p, err := s.Struct.Ptr(0)
+	return BwCluster_List{List: p.List()}, err
+}
+
+func (s BwInfo) HasBwClusters() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s BwInfo) SetBwClusters(v BwCluster_List) error {
+	return s.Struct.SetPtr(0, v.List.ToPtr())
+}
+
+// NewBwClusters sets the bwClusters field to a newly
+// allocated BwCluster_List, preferring placement in s's segment.
+func (s BwInfo) NewBwClusters(n int32) (BwCluster_List, error) {
+	l, err := NewBwCluster_List(s.Struct.Segment(), n)
+	if err != nil {
+		return BwCluster_List{}, err
+	}
+	err = s.Struct.SetPtr(0, l.List.ToPtr())
+	return l, err
+}
+
+func (s BwInfo) EgressBW() uint32 {
+	return s.Struct.Uint32(0)
+}
+
+func (s BwInfo) SetEgressBW(v uint32) {
+	s.Struct.SetUint32(0, v)
+}
+
+func (s BwInfo) InToOutBW() uint32 {
+	return s.Struct.Uint32(4)
+}
+
+func (s BwInfo) SetInToOutBW(v uint32) {
+	s.Struct.SetUint32(4, v)
+}
+
+// BwInfo_List is a list of BwInfo.
+type BwInfo_List struct{ capnp.List }
+
+// NewBwInfo creates a new list of BwInfo.
+func NewBwInfo_List(s *capnp.Segment, sz int32) (BwInfo_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
+	return BwInfo_List{l}, err
+}
+
+func (s BwInfo_List) At(i int) BwInfo { return BwInfo{s.List.Struct(i)} }
+
+func (s BwInfo_List) Set(i int, v BwInfo) error { return s.List.SetStruct(i, v.Struct) }
+
+func (s BwInfo_List) String() string {
+	str, _ := text.MarshalList(0xe8339f855b7b98a8, s.List)
+	return str
+}
+
+// BwInfo_Promise is a wrapper for a BwInfo promised by a client call.
+type BwInfo_Promise struct{ *capnp.Pipeline }
+
+func (p BwInfo_Promise) Struct() (BwInfo, error) {
+	s, err := p.Pipeline.Struct()
+	return BwInfo{s}, err
+}
+
 type WatchDogMetricExt struct{ capnp.Struct }
 
 // WatchDogMetricExt_TypeID is the unique identifier for the type WatchDogMetricExt.
 const WatchDogMetricExt_TypeID = 0xec40e340d3b20459
 
 func NewWatchDogMetricExt(s *capnp.Segment) (WatchDogMetricExt, error) {
-	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
 	return WatchDogMetricExt{st}, err
 }
 
 func NewRootWatchDogMetricExt(s *capnp.Segment) (WatchDogMetricExt, error) {
-	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0})
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
 	return WatchDogMetricExt{st}, err
 }
 
@@ -206,12 +382,29 @@ func (s WatchDogMetricExt) SetSet(v bool) {
 	s.Struct.SetBit(0, v)
 }
 
-func (s WatchDogMetricExt) Val() uint32 {
-	return s.Struct.Uint32(4)
+func (s WatchDogMetricExt) BwInfo() (BwInfo, error) {
+	p, err := s.Struct.Ptr(0)
+	return BwInfo{Struct: p.Struct()}, err
 }
 
-func (s WatchDogMetricExt) SetVal(v uint32) {
-	s.Struct.SetUint32(4, v)
+func (s WatchDogMetricExt) HasBwInfo() bool {
+	p, err := s.Struct.Ptr(0)
+	return p.IsValid() || err != nil
+}
+
+func (s WatchDogMetricExt) SetBwInfo(v BwInfo) error {
+	return s.Struct.SetPtr(0, v.Struct.ToPtr())
+}
+
+// NewBwInfo sets the bwInfo field to a newly
+// allocated BwInfo struct, preferring placement in s's segment.
+func (s WatchDogMetricExt) NewBwInfo() (BwInfo, error) {
+	ss, err := NewBwInfo(s.Struct.Segment())
+	if err != nil {
+		return BwInfo{}, err
+	}
+	err = s.Struct.SetPtr(0, ss.Struct.ToPtr())
+	return ss, err
 }
 
 // WatchDogMetricExt_List is a list of WatchDogMetricExt.
@@ -219,7 +412,7 @@ type WatchDogMetricExt_List struct{ capnp.List }
 
 // NewWatchDogMetricExt creates a new list of WatchDogMetricExt.
 func NewWatchDogMetricExt_List(s *capnp.Segment, sz int32) (WatchDogMetricExt_List, error) {
-	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 0}, sz)
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
 	return WatchDogMetricExt_List{l}, err
 }
 
@@ -244,34 +437,51 @@ func (p WatchDogMetricExt_Promise) Struct() (WatchDogMetricExt, error) {
 	return WatchDogMetricExt{s}, err
 }
 
-const schema_e6c88f91b6a1209e = "x\xdal\x90?\xeb\xd3P\x18\x85\xcf\xb97m\xf2\x13" +
-	"m\x1b\x9b\x0f \xe2\xa0\xa2bQA\\\xac\xd2\x0e\x1d" +
-	"\x84^\x15\xa4 hH\xafm \xff0\xb7\xdaNE" +
-	"PW\xe9\xa0\xa3\xd0\xc5\x0f\xe0 \xae\x0e\x8a\xbb\x9b\xab" +
-	"\xa2\x8b_\xc0)r;T\x8b]\x0f\xcf{\xde\x87\xd3" +
-	"z\xd3\x15\x9dZ\x93\x80:\\\xabW\xbf\xbf_\xba\xfc" +
-	"\xfe\xeb\x87WPM\x8a\xea\xf5\xb1\xf5\xbb\xd5\x8b\xcf?" +
-	"P\xa3\x0btRA\x7f\xe1\x02\xfe\xec'X\xad?\x9d" +
-	"y\xd2\xd0\xcf?Z\x94\x7fQ\xc7\x05.\x8cx\x94\xed" +
-	"\xd8\x1e\xb55\xaf\x82\xd5\xc8y\xfb\xa5\xfb\xad\xfbk\x1f" +
-	"\xfc\x8c\x87\xd8~\xb9\x81W|\x0cVa\x99\xde\xd3s" +
-	"S\xcasQXd\xc5\x95\x9b\xf9\xcc\xc4\xd9d\x98'" +
-	"q\xb4\xe8\xcf\x0d\x86\xa4jI\x07p\x08\xf8\xe1q@" +
-	"\xdd\x95TSA\x9f\x0chC}\x1dP\xf7%U\"" +
-	"\xe8\x0b\x06\x14\x80\x1f\x9f\x06\xd4XR\x15\x82\x94\x01%" +
-	"\xe0\xa7\x16\x9cJ\xaa\xa7\x82n\xa9\x0d\x09A\x82\xcb\"" +
-	"On/\x0a\xcd:\x04\xeb`3~0\xe8\xf1\x00\x82" +
-	"\x07\xe02.\xc7a\xa9K6\xc0\xa1\xe4&n\xec1" +
-	"\x1f\xdc\xea]\xcb\xb2|\x96E:\xd5\x99\xe9\xcfi\xac" +
-	"\xbb\xb3u?b\xdd=I\x15\xec~\xff\xaf\xe9Nh" +
-	"\xa2i/\x9f\xdc\xd0\xe6a\x1c\xd9\x116+x\xdb\xa6" +
-	"S\xb6\xe9\x84\xa4:\xff\xcf\x0agmxRR]\xdc" +
-	"\xadw\x1f\x85\x09=\x08z\xe0\x9f\x00\x00\x00\xff\xffW" +
-	"\xb6r$"
+func (p WatchDogMetricExt_Promise) BwInfo() BwInfo_Promise {
+	return BwInfo_Promise{Pipeline: p.Pipeline.GetPipeline(0)}
+}
+
+const schema_e6c88f91b6a1209e = "x\xdat\x92?k\x14]\x18\xc5\xcf\xb9w\x93l^" +
+	"^\x93\x1dg[\x89\xff\x0a\x15#\x09Q\xd0\x80$Y" +
+	"7\xc8\x8a\xc1\xbd1\x10\xa2\x063\x99\xdc$\x03\x9b\x99" +
+	"eg\x96$X\x04A\x05+\xb1\x11+%\x9db!" +
+	"\xa4\x10;\xb1\x88\x88`!v\xb6\x8aZ\xf8\x05\xacF" +
+	"\xee\x9a\x9d\xd9,\xb1\x9a\xcbp\xee=\xbfs\x9eg\xa0" +
+	"\x8f\xa3b\xb0\xe3\x0d\x01\x95\xef\xe8\x8c\xcb/\x9e\x1f\x19" +
+	"\xb1.\xde\x87\xea%\xe3'\x077_=|\xf0\xfe;" +
+	":\xd8\x05X\xdb\x1f\xacO\xe6\xfbq\x15\x8c\x7f\x7f;" +
+	"s\xf6\xf5\x97\xb7\x8f\x8cR\xb4)\x87\xc6(hO\x98" +
+	"\xa3]\xe2\x0f0\xde|w\xf2v\x8f\xbe\xb7\xdd\xf6n" +
+	"\xc6\x88\xfb\xc5~\xda\xe7\x85\x11\x9f\x13#`\xfc\xec\xf1" +
+	"\xad\xebw\x9f\x0e\xfd\xdc\x0b\xc2\x9e\x11[\xb6\xd3\x10\xcf" +
+	"\x8a\x97`<\x93\xd9\xfa<\xfau\xf4\xd7^\xe2!K" +
+	"\xfeG\xfb\x904\xea\x03\xd2P;\xe1\xcaM\xbd\x16\x85" +
+	"\xe2\x94\xebT\xfd\xeapa\xf5B\xa5\x1eF\xba\x06\x94" +
+	"I\x95\x95\x19 C\xc0:>\x09\xa8c\x92\xea\xb4 " +
+	"\x99\xa7\xf97x\x0dP\x03\x92\xea\xb2`\xec\xfe\xbdW" +
+	"\x00\xa7\x99\x85`\x16\x8c=?\xd2\xb5E\xc7\x85\xd4!" +
+	"{\xc0\xb2$\xbb \xcc1q\x96;\xce\x93A=\xf2" +
+	"\xfc\xa5rP\xf1\xdc\xf5\xf1\xb5\xa8\xe1\x9fK\xfc\x9d\xc3" +
+	"\x80\xba!\xa9\x96\x05\xad&\x80.\x00jNRU\x04" +
+	"-\xc1<\x05`y'\x00\xb5 \xa9\xaa\x82\x94yJ" +
+	"\xc0Z1\xc2eIuG\xb0+\xd4\x11\x09A\x82\x1b" +
+	"\xd5\xa02\xb5^\xd5\xec\x84`'\xd8\xeb-\x96\x8a\xec" +
+	"\x86`7\xb8\xe1\x85\x0bN\x98\x92w\xff\x83\xbct\xb5" +
+	"8\xe6\xfbA\xddw\xf5\x8a\xf6\xa3\xf15F\x86=\x93" +
+	"\xb0\xef3\xecYI\x95\xdf\xed\x9e\xbc\xc4f\xfb}\xab" +
+	"%\x7f10\xb7\xffOn\x8f\x9b\x96\x8b\x92j.m" +
+	"~\xf6RK\x1b\xcd\xe0z2\x0d\x1e\xcf\xef\x0c\x12\xb2" +
+	"\x96\x04\xc8\xa5\xeb\x0c6\xa2\xe8\xa5\x9a\x0e\xc3\xc24\x80" +
+	"\x96\xa1M\x05W\xea\xd1\xaeA\xb6G\x9ev\"w\xb9" +
+	"\x18,M\xe8\xa8\xe6\xb9fZ\xed\xebb\"\x1f\x95T" +
+	"\x03)t\xffp\xbaB\xad5\x8c\xcc7R3\x97." +
+	":\xc8\x1c\xf8'\x00\x00\xff\xffr\xa4\xcfL"
 
 func init() {
 	schemas.Register(schema_e6c88f91b6a1209e,
+		0x8947113f23a9ab50,
 		0x96c1dab83835e4f9,
 		0xc586650e812cc6a1,
+		0xe8339f855b7b98a8,
 		0xec40e340d3b20459)
 }
