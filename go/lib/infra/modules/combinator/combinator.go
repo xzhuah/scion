@@ -133,7 +133,7 @@ func (p *Path) WriteTo(w io.Writer) (int64, error) {
 		}
 
 		buf := new(bytes.Buffer)
-		err = binary.Write(buf, binary.LittleEndian, segment.Exts)
+		err = binary.Write(buf, binary.LittleEndian, *segment.Exts)
 		nn, err := w.Write(buf.Bytes())
 		total += int64(nn)
 		//bs = make([]byte, 4)
