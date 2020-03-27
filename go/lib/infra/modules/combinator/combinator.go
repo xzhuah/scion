@@ -25,6 +25,7 @@
 package combinator
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -131,32 +132,19 @@ func (p *Path) WriteTo(w io.Writer) (int64, error) {
 			}
 		}
 
-		//for _, watchDog := range segment.Exts {
-		//	b := make(common.RawBytes, HopFieldLength)
-		//	h.Write(b)
-		//	return b
-		//}
-
-		bs = make([]byte, 4)
-		binary.LittleEndian.PutUint32(bs, segment.Exts)
-		// fmt.Println(bs)
-		nn, err := w.Write(bs)
+		buf := new(bytes.Buffer)
+		err = binary.Write(buf, binary.LittleEndian, segment.Exts)
+		nn, err := w.Write(buf.Bytes())
 		total += int64(nn)
+		//bs = make([]byte, 4)
+		//binary.LittleEndian.PutUint32(bs, segment.Exts)
+		//// fmt.Println(bs)
+		//nn, err := w.Write(bs)
+		//total += int64(nn)
 		if err != nil {
 			return total, err
 		}
 
-		//for _, int_value := range segment.Exts {
-		//
-		//	bs := make([]byte, 4)
-		//	binary.LittleEndian.PutUint32(bs, int_value)
-		//	fmt.Println(bs)
-		//	n, err := w.Write(bs)
-		//	total += int64(n)
-		//	if err != nil {
-		//		return total, err
-		//	}
-		//}
 	}
 	return total, nil
 }
@@ -166,7 +154,7 @@ type Segment struct {
 	HopFields  []*HopField
 	Type       proto.PathSegType
 	Interfaces []sciond.PathInterface
-	Exts       uint32
+	Exts       *seg.WatchDogMetricExtn
 }
 
 // initInfoFieldFrom copies the info field in pathSegment, and sets it as the
