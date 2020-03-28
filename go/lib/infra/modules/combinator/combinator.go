@@ -26,7 +26,7 @@ package combinator
 
 import (
 	"bytes"
-	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"io"
 	"time"
@@ -133,14 +133,22 @@ func (p *Path) WriteTo(w io.Writer) (int64, error) {
 		}
 
 		buf := new(bytes.Buffer)
-		err = binary.Write(buf, binary.LittleEndian, *segment.Exts)
-		nn, err := w.Write(buf.Bytes())
+		err = gob.NewEncoder(buf).Encode(*segment.Exts)
+		if err != nil {
+			fmt.Printf("Encode error: %w\n", err)
+			return total, err
+		}
+		fmt.Printf("Encode %d bytes\n", buf.Len())
+		length := make([]byte, buf.Len())
+		nn, err := w.Write(length)
+
+		if err != nil {
+			fmt.Printf("Encode Length error: %w\n", err)
+			return total, err
+		}
 		total += int64(nn)
-		//bs = make([]byte, 4)
-		//binary.LittleEndian.PutUint32(bs, segment.Exts)
-		//// fmt.Println(bs)
-		//nn, err := w.Write(bs)
-		//total += int64(nn)
+		nn, err = w.Write(buf.Bytes())
+		total += int64(nn)
 		if err != nil {
 			return total, err
 		}
