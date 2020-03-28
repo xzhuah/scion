@@ -21,9 +21,9 @@ func (bc *BwCluster) ProtoId() proto.ProtoIdType {
 
 func (bc *BwCluster) String() string {
 	if bc == nil {
-		return fmt.Sprintf("%v", false)
+		return "[nil]"
 	}
-	return fmt.Sprintf("%+v", *bc)
+	return fmt.Sprintf("[ClusterBW=%v | Interfaces=%v]", bc.ClusterBW, bc.Interfaces)
 }
 
 type BwInfo struct {
@@ -38,9 +38,14 @@ func (bi *BwInfo) ProtoId() proto.ProtoIdType {
 
 func (bi *BwInfo) String() string {
 	if bi == nil {
-		return fmt.Sprintf("%v", false)
+		return "[nil]"
 	}
-	return fmt.Sprintf("[EgressBW=%v | InToOutBW=%v]", bi.EgressBW, bi.InToOutBW)
+	clusters := "["
+	for _, cluster := range bi.BwClusters {
+		clusters += fmt.Sprintf("%v ", cluster)
+	}
+	clusters += "]"
+	return fmt.Sprintf("[BwClusters=%v | EgressBW=%v | InToOutBW=%v]", clusters, bi.EgressBW, bi.InToOutBW)
 }
 
 type WatchDogMetricExtn struct {
@@ -74,7 +79,7 @@ func (wdExt *WatchDogMetricExtn) ProtoId() proto.ProtoIdType {
 
 func (wdExt *WatchDogMetricExtn) String() string {
 	if wdExt == nil {
-		return fmt.Sprintf("%v", false)
+		return "[nil]"
 	}
 	return fmt.Sprintf("[Set=%v | BwInfo=%v]", wdExt.Set, *wdExt.BwInfo)
 }

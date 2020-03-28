@@ -18,11 +18,11 @@ package sciond
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
@@ -259,11 +259,20 @@ func (fpm *FwdPathMeta) PrintSegments() error {
 			fmt.Printf("HopField %d: %s\n", j, hop)
 		}
 
-		// parse extension metric
+		// Parse watch dog metric length.
+		metricLen := int(binary.LittleEndian.Uint32(fpm.FwdPath[off : off+4]))
+		off += 4
+
+		// Parse watch dog metric.
 		metric := &seglib.WatchDogMetricExtn{}
-		binary.Read(bytes.NewReader(fpm.FwdPath[off:]), binary.LittleEndian, metric)
+		err = gob.NewDecoder(bytes.NewReader(fpm.FwdPath[off : off+metricLen])).Decode(metric)
+		if err != nil {
+			return fmt.Errorf("Parse watch dog metric failed | err=[%w]", err)
+		}
+		off += metricLen
+
+		// Print watch dog metric.
 		fmt.Printf("Metric: %v\n", metric)
-		off += int(unsafe.Sizeof(metric))
 	}
 
 	return nil
