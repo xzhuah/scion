@@ -260,8 +260,8 @@ func (fpm *FwdPathMeta) PrintSegments() error {
 		}
 
 		// parse extension metric
-		metric := seglib.WatchDogMetricExtn{}
-		binary.Read(bytes.NewReader(fpm.FwdPath[off:]), binary.LittleEndian, &metric)
+		metric := &seglib.WatchDogMetricExtn{}
+		binary.Read(bytes.NewReader(fpm.FwdPath[off:]), binary.LittleEndian, metric)
 		fmt.Printf("Metric: %v\n", metric)
 		off += int(unsafe.Sizeof(metric))
 	}
