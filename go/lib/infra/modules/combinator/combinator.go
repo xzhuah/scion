@@ -26,6 +26,7 @@ package combinator
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -138,18 +139,18 @@ func (p *Path) WriteTo(w io.Writer) (int64, error) {
 		}
 
 		metricLen := make([]byte, 4)
-		binary.LittleEndian.PutUint32(metricLen, buf.Len())
-		n, err := w.Write(metricLen)
+		binary.LittleEndian.PutUint32(metricLen, uint32(buf.Len()))
+		nn, err := w.Write(metricLen)
 		if err != nil {
 			return total, err
 		}
-		total += int64(n)
+		total += int64(nn)
 
-		n, err = w.Write(buf.Bytes())
+		nn, err = w.Write(buf.Bytes())
 		if err != nil {
 			return total, err
 		}
-		total += int64(n)
+		total += int64(nn)
 	}
 	return total, nil
 }
