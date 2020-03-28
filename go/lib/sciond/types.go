@@ -270,6 +270,9 @@ func (fpm *FwdPathMeta) PrintSegments() error {
 			return fmt.Errorf("Parse watch dog metric failed | err=[%w]", err)
 		}
 		off += metricLen
+
+		// Print watch dog metric.
+		fmt.Printf("Metric: %v\n", metric)
 	}
 
 	return nil
