@@ -16,16 +16,19 @@
 package sciond
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/drkey_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
+	seglib "github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/hostinfo"
 	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/util"
@@ -256,10 +259,11 @@ func (fpm *FwdPathMeta) PrintSegments() error {
 			fmt.Printf("HopField %d: %s\n", j, hop)
 		}
 
-		// parse uint32
-		val := binary.LittleEndian.Uint32(fpm.FwdPath[off : off+4])
-		fmt.Printf("Value: %d\n", val)
-		off += 4
+		// parse extension metric
+		metric := &seglib.WatchDogMetricExtn{}
+		binary.Read(bytes.NewReader(fpm.FwdPath[off:]), binary.LittleEndian, metric)
+		fmt.Printf("Metric: %v\n", metric)
+		off += int(unsafe.Sizeof(metric))
 	}
 
 	return nil

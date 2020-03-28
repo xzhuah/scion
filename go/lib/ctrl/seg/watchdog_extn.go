@@ -40,7 +40,7 @@ func (bi *BwInfo) String() string {
 	if bi == nil {
 		return fmt.Sprintf("%v", false)
 	}
-	return fmt.Sprintf("%+v", *bi)
+	return fmt.Sprintf("[EgressBW=%v | InToOutBW=%v]", bi.EgressBW, bi.InToOutBW)
 }
 
 type WatchDogMetricExtn struct {
@@ -76,5 +76,5 @@ func (wdExt *WatchDogMetricExtn) String() string {
 	if wdExt == nil {
 		return fmt.Sprintf("%v", false)
 	}
-	return fmt.Sprintf("%+v", *wdExt)
+	return fmt.Sprintf("[Set=%v | BwInfo=%v]", wdExt.Set, *wdExt.BwInfo)
 }
