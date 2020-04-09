@@ -133,24 +133,27 @@ func (p *Path) WriteTo(w io.Writer) (int64, error) {
 		}
 
 		buf := new(bytes.Buffer)
-		err = gob.NewEncoder(buf).Encode(segment.Exts)
-		if err != nil {
-			return total, err
-		}
-
 		metricLen := make([]byte, 4)
-		binary.LittleEndian.PutUint32(metricLen, uint32(buf.Len()))
-		nn, err := w.Write(metricLen)
-		if err != nil {
-			return total, err
-		}
-		total += int64(nn)
+		for _, ext := range segment.Exts {
+			err = gob.NewEncoder(buf).Encode(ext)
+			if err != nil {
+				return total, err
+			}
+			binary.LittleEndian.PutUint32(metricLen, uint32(buf.Len()))
+			nn, err := w.Write(metricLen)
+			if err != nil {
+				return total, err
+			}
+			total += int64(nn)
 
-		nn, err = w.Write(buf.Bytes())
-		if err != nil {
-			return total, err
+			nn, err = w.Write(buf.Bytes())
+			if err != nil {
+				return total, err
+			}
+			total += int64(nn)
+			buf.Reset()
 		}
-		total += int64(nn)
+
 	}
 	return total, nil
 }
