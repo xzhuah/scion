@@ -242,15 +242,22 @@ func (fpm *FwdPathMeta) String() string {
 func (fpm *FwdPathMeta) PrintSegments() error {
 	size := len(fpm.FwdPath)
 
+	// Parse each segment.
 	for off, seg := 0, 0; off+spath.InfoFieldLength <= size; seg++ {
+		fmt.Printf("[Segment %d]\n", seg)
+
+		// Parse info field.
 		info, err := spath.InfoFFromRaw(fpm.FwdPath[off : off+spath.InfoFieldLength])
 		if err != nil {
 			return fmt.Errorf("Parse info field failed | err=[%w]", err)
 		}
 		off += spath.InfoFieldLength
 
-		fmt.Printf("[Segment %d]\n", seg)
-		for j := uint8(0); j < info.Hops && off+spath.HopFieldLength <= size; j++ {
+		// Parse hop fields.
+		for j := uint8(0); j < info.Hops; j++ {
+			if off+spath.HopFieldLength > size {
+				return fmt.Errorf("Hop field not found")
+			}
 			hop, err := spath.HopFFromRaw(fpm.FwdPath[off : off+spath.HopFieldLength])
 			if err != nil {
 				return fmt.Errorf("Parse hop field failed | err=[%w]", err)
@@ -259,20 +266,30 @@ func (fpm *FwdPathMeta) PrintSegments() error {
 			fmt.Printf("HopField %d: %s\n", j, hop)
 		}
 
-		// Parse watch dog metric length.
-		metricLen := int(binary.LittleEndian.Uint32(fpm.FwdPath[off : off+4]))
-		off += 4
+		// Parse watch dog metrics.
+		for j := uint8(0); j < info.Hops; j++ {
 
-		// Parse watch dog metric.
-		metric := &seglib.WatchDogMetricExtn{}
-		err = gob.NewDecoder(bytes.NewReader(fpm.FwdPath[off : off+metricLen])).Decode(metric)
-		if err != nil {
-			return fmt.Errorf("Parse watch dog metric failed | err=[%w]", err)
+			// Parse metric length.
+			if off+4 > size {
+				return fmt.Errorf("Watch dog metric length not found")
+			}
+			metricLen := int(binary.LittleEndian.Uint32(fpm.FwdPath[off : off+4]))
+			off += 4
+
+			// Parse metric.
+			if off+metricLen > size {
+				return fmt.Errorf("Watch dog metric not found")
+			}
+			metric := &seglib.WatchDogMetricExtn{}
+			err = gob.NewDecoder(bytes.NewReader(fpm.FwdPath[off : off+metricLen])).Decode(metric)
+			if err != nil {
+				return fmt.Errorf("Parse watch dog metric failed | err=[%w]", err)
+			}
+			off += metricLen
+
+			// Print watch dog metric.
+			fmt.Printf("Metric: %v\n", metric)
 		}
-		off += metricLen
-
-		// Print watch dog metric.
-		fmt.Printf("Metric: %v\n", metric)
 	}
 
 	return nil
