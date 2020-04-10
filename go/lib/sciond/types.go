@@ -241,10 +241,13 @@ func (fpm *FwdPathMeta) String() string {
 // PrintSegments parses and prints fpm's segments information.
 func (fpm *FwdPathMeta) PrintSegments() error {
 	size := len(fpm.FwdPath)
+	segMetrics := make([][]*seglib.WatchDogMetricExtn, 0)
 
 	// Parse each segment.
+	fmt.Println("Segments:")
 	for off, seg := 0, 0; off+spath.InfoFieldLength <= size; seg++ {
 		fmt.Printf("[Segment %d]\n", seg)
+		metrics := make([]*seglib.WatchDogMetricExtn, 0)
 
 		// Parse info field.
 		info, err := spath.InfoFFromRaw(fpm.FwdPath[off : off+spath.InfoFieldLength])
@@ -287,8 +290,19 @@ func (fpm *FwdPathMeta) PrintSegments() error {
 			}
 			off += metricLen
 
-			// Print watch dog metric.
-			fmt.Printf("Metric: %v\n", metric)
+			// Add watch dog metric.
+			metrics = append(metrics, metric)
+		}
+
+		segMetrics = append(segMetrics, metrics)
+	}
+
+	// Print each metric.
+	fmt.Println("Metrics:")
+	for i, segMetric := range segMetrics {
+		fmt.Printf("[Segment %d]\n", i)
+		for j, metric := range segMetric {
+			fmt.Printf("Metric %d: %v\n", j, metric)
 		}
 	}
 
