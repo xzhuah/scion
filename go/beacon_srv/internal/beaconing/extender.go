@@ -76,7 +76,7 @@ func (s *segExtender) extend(pseg *seg.PathSegment, inIfid, egIfid common.IFIDTy
 	// this line of code should collect correct information for watchdogmetric and update it
 	// currently it is just a placeholder here
 	asEntry.Exts.WatchDogMetric = seg.NewWatchDogMetricExtn()
-	asEntry.Exts.WatchDogMetric.GeoInfo.RawIA = asEntry.RawIA
+	asEntry.Exts.WatchDogMetric.GeoInfo.RawIA = uint64(asEntry.RawIA)
 
 	if err := pseg.AddASEntry(asEntry, s.cfg.Signer); err != nil {
 		return err
