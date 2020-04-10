@@ -19,6 +19,7 @@ func (bc *BwCluster) ProtoId() proto.ProtoIdType {
 	return proto.BwCluster_TypeID
 }
 
+// bandwidth information
 func (bc *BwCluster) String() string {
 	if bc == nil {
 		return "[nil]"
@@ -30,6 +31,22 @@ type BwInfo struct {
 	BwClusters []*BwCluster
 	EgressBW   uint32
 	InToOutBW  uint32
+}
+
+// geo information
+type GeoInfo struct {
+	locations []*Location
+}
+
+type Location struct {
+	gpsData    *Coordinates
+	interfaces []uint16
+}
+
+type Coordinates struct {
+	latitude  float32
+	longitude float32
+	address   string
 }
 
 func (bi *BwInfo) ProtoId() proto.ProtoIdType {
@@ -49,8 +66,9 @@ func (bi *BwInfo) String() string {
 }
 
 type WatchDogMetricExtn struct {
-	Set    bool
-	BwInfo *BwInfo
+	Set     bool
+	BwInfo  *BwInfo
+	GeoInfo *GeoInfo
 }
 
 func NewWatchDogMetricExtn() *WatchDogMetricExtn {
@@ -69,6 +87,26 @@ func NewWatchDogMetricExtn() *WatchDogMetricExtn {
 			},
 			EgressBW:  300,
 			InToOutBW: 400,
+		},
+		GeoInfo: &GeoInfo{
+			locations: []*Location{
+				&Location{
+					gpsData: &Coordinates{
+						latitude:  10,
+						longitude: 10,
+						address:   "some geo location",
+					},
+					interfaces: []uint16{1, 2, 3},
+				},
+				&Location{
+					gpsData: &Coordinates{
+						latitude:  100,
+						longitude: 100,
+						address:   "geo location 2",
+					},
+					interfaces: []uint16{1, 2, 4},
+				},
+			},
 		},
 	}
 }
