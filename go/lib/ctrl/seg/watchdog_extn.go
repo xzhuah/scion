@@ -2,9 +2,10 @@ package seg
 
 import (
 	"fmt"
+	"math/rand"
+
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/proto"
-	"math/rand"
 )
 
 var _ proto.Cerealizable = (*BwCluster)(nil)
@@ -53,7 +54,7 @@ func (bi *BwInfo) String() string {
 type GeoInfo struct {
 	Latitude  float64
 	Longitude float64
-	RawIA     addr.IAInt
+	RawIA     uint64
 }
 
 func (gi *GeoInfo) ProtoId() proto.ProtoIdType {
@@ -64,7 +65,7 @@ func (gi *GeoInfo) String() string {
 	if gi == nil {
 		return "[nil]"
 	}
-	return fmt.Sprintf("[Latitude=%.2f | Longitude=%.2f | RawIA=%v]", gi.Latitude, gi.Longitude, gi.RawIA)
+	return fmt.Sprintf("[Latitude=%.2f | Longitude=%.2f | IA=%v]", gi.Latitude, gi.Longitude, addr.IAInt(gi.RawIA))
 }
 
 type WatchDogMetricExtn struct {

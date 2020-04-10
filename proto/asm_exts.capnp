@@ -28,6 +28,7 @@ struct BwInfo {
 struct GeoInfo {
     latitude @0 :Float64;
     longitude @1 :Float64;
+    rawIA @2 :UInt64;
 }
 
 struct WatchDogMetricExt{
