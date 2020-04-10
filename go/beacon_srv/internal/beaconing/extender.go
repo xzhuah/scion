@@ -73,6 +73,8 @@ func (s *segExtender) extend(pseg *seg.PathSegment, inIfid, egIfid common.IFIDTy
 		MTU:        s.cfg.MTU,
 		HopEntries: hopEntries,
 	}
+	// this line of code should collect correct information for watchdogmetric and update it
+	// currently it is just a placeholder here
 	asEntry.Exts.WatchDogMetric = seg.NewWatchDogMetricExtn()
 	if err := pseg.AddASEntry(asEntry, s.cfg.Signer); err != nil {
 		return err

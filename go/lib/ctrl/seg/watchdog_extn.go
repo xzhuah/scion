@@ -119,5 +119,5 @@ func (wdExt *WatchDogMetricExtn) String() string {
 	if wdExt == nil {
 		return "[nil]"
 	}
-	return fmt.Sprintf("[Set=%v | BwInfo=%v]", wdExt.Set, *wdExt.BwInfo)
+	return fmt.Sprintf("[Set=%v | BwInfo=%v | GeoInfo=%v]", wdExt.Set, *wdExt.BwInfo, *wdExt.GeoInfo)
 }
