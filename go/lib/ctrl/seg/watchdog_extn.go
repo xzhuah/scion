@@ -62,7 +62,7 @@ func (gi *GeoInfo) String() string {
 	if gi == nil {
 		return "[nil]"
 	}
-	return fmt.Sprintf("[Latitude=%v | Longitude=%v]", gi.Latitude, gi.Longitude)
+	return fmt.Sprintf("[Latitude=%.2f | Longitude=%.2f]", gi.Latitude, gi.Longitude)
 }
 
 type WatchDogMetricExtn struct {
