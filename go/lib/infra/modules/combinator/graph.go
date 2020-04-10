@@ -290,10 +290,6 @@ func (solution *PathSolution) GetFwdPathMetadata() *Path {
 			currentSeg.Exts = append(currentSeg.Exts, anEntry.Exts.WatchDogMetric)
 		}
 
-		//if solEdge.segment.ASEntries[0].Exts.WatchDogMetric != nil {
-		//	currentSeg.Exts = solEdge.segment.ASEntries[0].Exts.WatchDogMetric
-		//}
-
 		path.Segments = append(path.Segments, currentSeg)
 
 		// Go through each ASEntry, starting from the last one, until we

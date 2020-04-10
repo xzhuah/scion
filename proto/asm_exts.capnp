@@ -25,7 +25,13 @@ struct BwInfo {
     inToOutBW @2 :UInt32;
 }
 
+struct GeoInfo {
+    latitude @0 :Float64;
+    longitude @1 :Float64;
+}
+
 struct WatchDogMetricExt{
     set @0 :Bool;
     bwInfo @1 :BwInfo;
+    geoInfo @2 :GeoInfo;
 }
