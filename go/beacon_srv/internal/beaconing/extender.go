@@ -15,7 +15,6 @@
 package beaconing
 
 import (
-	"math/rand"
 	"sync"
 	"time"
 
@@ -77,8 +76,7 @@ func (s *segExtender) extend(pseg *seg.PathSegment, inIfid, egIfid common.IFIDTy
 	// this line of code should collect correct information for watchdogmetric and update it
 	// currently it is just a placeholder here
 	asEntry.Exts.WatchDogMetric = seg.NewWatchDogMetricExtn()
-	asEntry.Exts.WatchDogMetric.GeoInfo.Latitude = rand.Float64()*180 + 1000
-	asEntry.Exts.WatchDogMetric.GeoInfo.Longitude = rand.Float64()*180 + 1000
+	asEntry.Exts.WatchDogMetric.GeoInfo.RawIA = asEntry.RawIA
 
 	if err := pseg.AddASEntry(asEntry, s.cfg.Signer); err != nil {
 		return err
