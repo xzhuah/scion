@@ -2,8 +2,8 @@ package seg
 
 import (
 	"fmt"
-
 	"github.com/scionproto/scion/go/proto"
+	"math/rand"
 )
 
 var _ proto.Cerealizable = (*BwCluster)(nil)
@@ -99,8 +99,8 @@ func NewWatchDogMetricExtn() *WatchDogMetricExtn {
 			InToOutBW: 400,
 		},
 		GeoInfo: &GeoInfo{
-			latitude:  10,
-			longitude: 10,
+			latitude:  rand.Float32() * 180,
+			longitude: rand.Float32() * 180,
 		},
 	}
 }
