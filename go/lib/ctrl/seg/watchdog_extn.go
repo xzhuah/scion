@@ -33,21 +33,24 @@ type BwInfo struct {
 	InToOutBW  uint32
 }
 
-// geo information
+// simplified geo information
 type GeoInfo struct {
-	locations []*Location
-}
-
-type Location struct {
-	gpsData    *Coordinates
-	interfaces []uint16
-}
-
-type Coordinates struct {
 	latitude  float32
 	longitude float32
-	address   string
+	//locations []*Location
 }
+
+//
+//type Location struct {
+//	gpsData    *Coordinates
+//	interfaces []uint16
+//}
+//
+//type Coordinates struct {
+//	latitude  float32
+//	longitude float32
+//	address   string
+//}
 
 func (bi *BwInfo) ProtoId() proto.ProtoIdType {
 	return proto.BwInfo_TypeID
@@ -63,6 +66,13 @@ func (bi *BwInfo) String() string {
 	}
 	clusters += "]"
 	return fmt.Sprintf("[BwClusters=%v | EgressBW=%v | InToOutBW=%v]", clusters, bi.EgressBW, bi.InToOutBW)
+}
+
+func (gi *GeoInfo) String() string {
+	if gi == nil {
+		return "[nil]"
+	}
+	return fmt.Sprintf("[latitude=%v | longitude=%v]", gi.latitude, gi.longitude)
 }
 
 type WatchDogMetricExtn struct {
@@ -89,24 +99,8 @@ func NewWatchDogMetricExtn() *WatchDogMetricExtn {
 			InToOutBW: 400,
 		},
 		GeoInfo: &GeoInfo{
-			locations: []*Location{
-				&Location{
-					gpsData: &Coordinates{
-						latitude:  10,
-						longitude: 10,
-						address:   "some geo location",
-					},
-					interfaces: []uint16{1, 2, 3},
-				},
-				&Location{
-					gpsData: &Coordinates{
-						latitude:  100,
-						longitude: 100,
-						address:   "geo location 2",
-					},
-					interfaces: []uint16{1, 2, 4},
-				},
-			},
+			latitude:  10,
+			longitude: 10,
 		},
 	}
 }
