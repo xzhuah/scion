@@ -3,6 +3,7 @@
 package proto
 
 import (
+	math "math"
 	capnp "zombiezen.com/go/capnproto2"
 	text "zombiezen.com/go/capnproto2/encoding/text"
 	schemas "zombiezen.com/go/capnproto2/schemas"
@@ -349,18 +350,85 @@ func (p BwInfo_Promise) Struct() (BwInfo, error) {
 	return BwInfo{s}, err
 }
 
+type GeoInfo struct{ capnp.Struct }
+
+// GeoInfo_TypeID is the unique identifier for the type GeoInfo.
+const GeoInfo_TypeID = 0xa7ddfd22d6604c1a
+
+func NewGeoInfo(s *capnp.Segment) (GeoInfo, error) {
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 0})
+	return GeoInfo{st}, err
+}
+
+func NewRootGeoInfo(s *capnp.Segment) (GeoInfo, error) {
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 16, PointerCount: 0})
+	return GeoInfo{st}, err
+}
+
+func ReadRootGeoInfo(msg *capnp.Message) (GeoInfo, error) {
+	root, err := msg.RootPtr()
+	return GeoInfo{root.Struct()}, err
+}
+
+func (s GeoInfo) String() string {
+	str, _ := text.Marshal(0xa7ddfd22d6604c1a, s.Struct)
+	return str
+}
+
+func (s GeoInfo) Latitude() float64 {
+	return math.Float64frombits(s.Struct.Uint64(0))
+}
+
+func (s GeoInfo) SetLatitude(v float64) {
+	s.Struct.SetUint64(0, math.Float64bits(v))
+}
+
+func (s GeoInfo) Longitude() float64 {
+	return math.Float64frombits(s.Struct.Uint64(8))
+}
+
+func (s GeoInfo) SetLongitude(v float64) {
+	s.Struct.SetUint64(8, math.Float64bits(v))
+}
+
+// GeoInfo_List is a list of GeoInfo.
+type GeoInfo_List struct{ capnp.List }
+
+// NewGeoInfo creates a new list of GeoInfo.
+func NewGeoInfo_List(s *capnp.Segment, sz int32) (GeoInfo_List, error) {
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 16, PointerCount: 0}, sz)
+	return GeoInfo_List{l}, err
+}
+
+func (s GeoInfo_List) At(i int) GeoInfo { return GeoInfo{s.List.Struct(i)} }
+
+func (s GeoInfo_List) Set(i int, v GeoInfo) error { return s.List.SetStruct(i, v.Struct) }
+
+func (s GeoInfo_List) String() string {
+	str, _ := text.MarshalList(0xa7ddfd22d6604c1a, s.List)
+	return str
+}
+
+// GeoInfo_Promise is a wrapper for a GeoInfo promised by a client call.
+type GeoInfo_Promise struct{ *capnp.Pipeline }
+
+func (p GeoInfo_Promise) Struct() (GeoInfo, error) {
+	s, err := p.Pipeline.Struct()
+	return GeoInfo{s}, err
+}
+
 type WatchDogMetricExt struct{ capnp.Struct }
 
 // WatchDogMetricExt_TypeID is the unique identifier for the type WatchDogMetricExt.
 const WatchDogMetricExt_TypeID = 0xec40e340d3b20459
 
 func NewWatchDogMetricExt(s *capnp.Segment) (WatchDogMetricExt, error) {
-	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	st, err := capnp.NewStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
 	return WatchDogMetricExt{st}, err
 }
 
 func NewRootWatchDogMetricExt(s *capnp.Segment) (WatchDogMetricExt, error) {
-	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1})
+	st, err := capnp.NewRootStruct(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2})
 	return WatchDogMetricExt{st}, err
 }
 
@@ -407,12 +475,37 @@ func (s WatchDogMetricExt) NewBwInfo() (BwInfo, error) {
 	return ss, err
 }
 
+func (s WatchDogMetricExt) GeoInfo() (GeoInfo, error) {
+	p, err := s.Struct.Ptr(1)
+	return GeoInfo{Struct: p.Struct()}, err
+}
+
+func (s WatchDogMetricExt) HasGeoInfo() bool {
+	p, err := s.Struct.Ptr(1)
+	return p.IsValid() || err != nil
+}
+
+func (s WatchDogMetricExt) SetGeoInfo(v GeoInfo) error {
+	return s.Struct.SetPtr(1, v.Struct.ToPtr())
+}
+
+// NewGeoInfo sets the geoInfo field to a newly
+// allocated GeoInfo struct, preferring placement in s's segment.
+func (s WatchDogMetricExt) NewGeoInfo() (GeoInfo, error) {
+	ss, err := NewGeoInfo(s.Struct.Segment())
+	if err != nil {
+		return GeoInfo{}, err
+	}
+	err = s.Struct.SetPtr(1, ss.Struct.ToPtr())
+	return ss, err
+}
+
 // WatchDogMetricExt_List is a list of WatchDogMetricExt.
 type WatchDogMetricExt_List struct{ capnp.List }
 
 // NewWatchDogMetricExt creates a new list of WatchDogMetricExt.
 func NewWatchDogMetricExt_List(s *capnp.Segment, sz int32) (WatchDogMetricExt_List, error) {
-	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 1}, sz)
+	l, err := capnp.NewCompositeList(s, capnp.ObjectSize{DataSize: 8, PointerCount: 2}, sz)
 	return WatchDogMetricExt_List{l}, err
 }
 
@@ -441,46 +534,57 @@ func (p WatchDogMetricExt_Promise) BwInfo() BwInfo_Promise {
 	return BwInfo_Promise{Pipeline: p.Pipeline.GetPipeline(0)}
 }
 
-const schema_e6c88f91b6a1209e = "x\xdat\x92?k\x14]\x18\xc5\xcf\xb9w\x93l^" +
-	"^\x93\x1dg[\x89\xff\x0a\x15#\x09Q\xd0\x80$Y" +
-	"7\xc8\x8a\xc1\xbd1\x10\xa2\x063\x99\xdc$\x03\x9b\x99" +
-	"eg\x96$X\x04A\x05+\xb1\x11+%\x9db!" +
-	"\xa4\x10;\xb1\x88\x88`!v\xb6\x8aZ\xf8\x05\xacF" +
-	"\xee\x9a\x9d\xd9,\xb1\x9a\xcbp\xee=\xbfs\x9eg\xa0" +
-	"\x8f\xa3b\xb0\xe3\x0d\x01\x95\xef\xe8\x8c\xcb/\x9e\x1f\x19" +
-	"\xb1.\xde\x87\xea%\xe3'\x077_=|\xf0\xfe;" +
-	":\xd8\x05X\xdb\x1f\xacO\xe6\xfbq\x15\x8c\x7f\x7f;" +
-	"s\xf6\xf5\x97\xb7\x8f\x8cR\xb4)\x87\xc6(hO\x98" +
-	"\xa3]\xe2\x0f0\xde|w\xf2v\x8f\xbe\xb7\xdd\xf6n" +
-	"\xc6\x88\xfb\xc5~\xda\xe7\x85\x11\x9f\x13#`\xfc\xec\xf1" +
-	"\xad\xebw\x9f\x0e\xfd\xdc\x0b\xc2\x9e\x11[\xb6\xd3\x10\xcf" +
-	"\x8a\x97`<\x93\xd9\xfa<\xfau\xf4\xd7^\xe2!K" +
-	"\xfeG\xfb\x904\xea\x03\xd2P;\xe1\xcaM\xbd\x16\x85" +
-	"\xe2\x94\xebT\xfd\xeapa\xf5B\xa5\x1eF\xba\x06\x94" +
-	"I\x95\x95\x19 C\xc0:>\x09\xa8c\x92\xea\xb4 " +
-	"\x99\xa7\xf97x\x0dP\x03\x92\xea\xb2`\xec\xfe\xbdW" +
-	"\x00\xa7\x99\x85`\x16\x8c=?\xd2\xb5E\xc7\x85\xd4!" +
-	"{\xc0\xb2$\xbb \xcc1q\x96;\xce\x93A=\xf2" +
-	"\xfc\xa5rP\xf1\xdc\xf5\xf1\xb5\xa8\xe1\x9fK\xfc\x9d\xc3" +
-	"\x80\xba!\xa9\x96\x05\xad&\x80.\x00jNRU\x04" +
-	"-\xc1<\x05`y'\x00\xb5 \xa9\xaa\x82\x94yJ" +
-	"\xc0Z1\xc2eIuG\xb0+\xd4\x11\x09A\x82\x1b" +
-	"\xd5\xa02\xb5^\xd5\xec\x84`'\xd8\xeb-\x96\x8a\xec" +
-	"\x86`7\xb8\xe1\x85\x0bN\x98\x92w\xff\x83\xbct\xb5" +
-	"8\xe6\xfbA\xddw\xf5\x8a\xf6\xa3\xf15F\x86=\x93" +
-	"\xb0\xef3\xecYI\x95\xdf\xed\x9e\xbc\xc4f\xfb}\xab" +
-	"%\x7f10\xb7\xffOn\x8f\x9b\x96\x8b\x92j.m" +
-	"~\xf6RK\x1b\xcd\xe0z2\x0d\x1e\xcf\xef\x0c\x12\xb2" +
-	"\x96\x04\xc8\xa5\xeb\x0c6\xa2\xe8\xa5\x9a\x0e\xc3\xc24\x80" +
-	"\x96\xa1M\x05W\xea\xd1\xaeA\xb6G\x9ev\"w\xb9" +
-	"\x18,M\xe8\xa8\xe6\xb9fZ\xed\xebb\"\x1f\x95T" +
-	"\x03)t\xffp\xbaB\xad5\x8c\xcc7R3\x97." +
-	":\xc8\x1c\xf8'\x00\x00\xff\xffr\xa4\xcfL"
+func (p WatchDogMetricExt_Promise) GeoInfo() GeoInfo_Promise {
+	return GeoInfo_Promise{Pipeline: p.Pipeline.GetPipeline(1)}
+}
+
+const schema_e6c88f91b6a1209e = "x\xdal\x93Oh\x13K\x1c\xc7\x7f\xdf\x99\xb4M_" +
+	"\xdfk\xb3o\x03\xef\xe1E\xa9\x17\x15\x91\x96(H\x11" +
+	"\x12cJMi1\x13\x0b\xa5j\xb5\xdb\xed4]H" +
+	"vCvC[<\x14A\x05O\xe2E<)=\x88" +
+	"\x8a\x07\xb1\xa0\x88\xb7\x1e\x14\x11<\x88\xe0A\xf0\xa4\xa8" +
+	"\x07=\xf4\xe0\xa1\x87\xb22\xf9\xb3\xdb\xae\x9e2L\xbe" +
+	"\xb3\xbf\xcf\xef3\xbf\x198\x8f\x0c\x1b\xec\xf8\x8f\x11\x89" +
+	"\xff;:\xfd\xc2\xc3\x07{\xd3\xda\xc85\x12}\x80\x7f" +
+	"{\xcf\xea\xd3\x1b\xd7_}\xa1\x0et\x11i\x1b\xaf\xb5" +
+	"-\xf5\xbb\xb9H\xf07?\x1f9\xfa\xec\xc3\xfaM\x95" +
+	"d\x91d\xaa\x02\x06}Y-\xf5:\xbe\x12\xfc]c" +
+	"3\xef\xfb\xb7>\xde\x8b\xa4c*1\xc5\x9e\xeb\x06S" +
+	"\xabi\xa6\xbe\xbc\xfa\xf2\xe0\xa5^y\xf5E\x84Ae" +
+	"S\xeb\xec_\xe8o\x1b\xe17,M\xf0\xef\xdf\xbax" +
+	"\xf6\xca\x9d\xd4\xb7?\x01\xeb?\xd8\x9a\xfe\xb3\x11\xde`" +
+	"\x8f\x08\xfeTl\xed]\xe6S\xe6{4\xac\"\xa9\xbb" +
+	"\xfc/\xe8O\xb8J?\xe6*m\xb8\x95\x0br\xc9s" +
+	"\xd9!\xd3\xa8\xda\xd5\xa1\xec\xe2\x89r\xdd\xf5d\x8d\xa8" +
+	"\x00\x888\x8f\x11\xc5@\xa4\xed/\x12\x89}\x1c\xe20" +
+	"\x03\x90\x84\xda\x1b<C$\x068\xc4\x18\x83o6\xcf" +
+	"e\x09\x93\x88\x13C\x9c\xe0[\xb6'k\xf3\x86I\\" +
+	"\xba\xe8%\x148\xd0EL-\x83\xca\xbcU\xb9\xe8\xd4" +
+	"=\xcb.\x15\x9c\xb2e.\x0f/y\x8d\xfa\x89\xa0\xbe" +
+	"\xd1O$\xceq\x88\x05\x06\xad\x0d \xb3Db\x86C" +
+	"\x94\x194\x86$\x18\x91f\x1d \x12s\x1c\xa2\xca\x00" +
+	"\x9e\x04'\xd2**\xb8\xc0!.3t\xb9\xd2\x03\x88" +
+	"\x01\x84\x95\xaaS\x9eX\xaeJt\x12C'\xa1\xcf\x9a" +
+	"\xcf\xe7\xd0M\x0c\xdd\x84\x15\xcb\x9d3\xdc\x90\xbc;B" +
+	"\x8e\x16\xf9HZ:y{\xde\x89\x08\x1b\x0d\x85\x05\xc0" +
+	"\x83\xc5\x96\xb1c\x0c~\xd9\xf0,\xaf>'\x89\x08=" +
+	"\xc4\xd0C\xf0\xcb\x8e]R\x9b\x04\x19\xecEM\xe5O" +
+	"\xe7\x8e\xdb\xb6S\xb7MY\x91\xb67\xbc\x04O\x95\x8e" +
+	"\x05\xa5\xffQ\xae\xe2\x1c\"\xb9\xb3\xdb\xdf\xc8\xb3\xbb\x17" +
+	"\xdb\xe0\x7f\x07\xa7\x87\xd5\xad\xe68\xc4Lx\xd3\xd3\xa3" +
+	"\xdb\xec\xb7E\xcbb(\xda\x9fm\x0d\x0e\xf1Z ," +
+	"\x11>5BC\x9d,\xd5\xa4\xebf'U\xcb\xe1\x90" +
+	"L8\xa7\xea\xde\x8e\xc1\x89\xb6<ix\xe6B\xce)" +
+	"\x8dK\xaff\x99j:(\x02\xadZ\xce4G\xb1\x0d" +
+	"\x9d\x1fj5R\xd8\x06=\xae&\xe1$\x87\x98\xd8\xe9" +
+	"&=\xdbP\x81D\xf8\xda\x08H\x10VJ\xcd\xdbE" +
+	"\"|\xe0\xcd\x7f~\x05\x00\x00\xff\xff\x96\xbd\x06\x1f"
 
 func init() {
 	schemas.Register(schema_e6c88f91b6a1209e,
 		0x8947113f23a9ab50,
 		0x96c1dab83835e4f9,
+		0xa7ddfd22d6604c1a,
 		0xc586650e812cc6a1,
 		0xe8339f855b7b98a8,
 		0xec40e340d3b20459)

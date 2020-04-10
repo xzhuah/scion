@@ -33,25 +33,6 @@ type BwInfo struct {
 	InToOutBW  uint32
 }
 
-// simplified geo information
-type GeoInfo struct {
-	latitude  float32
-	longitude float32
-	//locations []*Location
-}
-
-//
-//type Location struct {
-//	gpsData    *Coordinates
-//	interfaces []uint16
-//}
-//
-//type Coordinates struct {
-//	latitude  float32
-//	longitude float32
-//	address   string
-//}
-
 func (bi *BwInfo) ProtoId() proto.ProtoIdType {
 	return proto.BwInfo_TypeID
 }
@@ -68,11 +49,20 @@ func (bi *BwInfo) String() string {
 	return fmt.Sprintf("[BwClusters=%v | EgressBW=%v | InToOutBW=%v]", clusters, bi.EgressBW, bi.InToOutBW)
 }
 
+type GeoInfo struct {
+	Latitude  float64
+	Longitude float64
+}
+
+func (gi *GeoInfo) ProtoId() proto.ProtoIdType {
+	return proto.GeoInfo_TypeID
+}
+
 func (gi *GeoInfo) String() string {
 	if gi == nil {
 		return "[nil]"
 	}
-	return fmt.Sprintf("[latitude=%v | longitude=%v]", gi.latitude, gi.longitude)
+	return fmt.Sprintf("[Latitude=%v | Longitude=%v]", gi.Latitude, gi.Longitude)
 }
 
 type WatchDogMetricExtn struct {
@@ -99,8 +89,8 @@ func NewWatchDogMetricExtn() *WatchDogMetricExtn {
 			InToOutBW: 400,
 		},
 		GeoInfo: &GeoInfo{
-			latitude:  rand.Float32() * 180,
-			longitude: rand.Float32() * 180,
+			Latitude:  rand.Float64() * 180,
+			Longitude: rand.Float64() * 180,
 		},
 	}
 }
